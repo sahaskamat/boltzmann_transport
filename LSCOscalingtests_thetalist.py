@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from makesigmalist import makelist_parallel
 
-thetalist = np.linspace(10,60,10)
+thetalist = np.linspace(10,80,20)
 
 dispersionInstance = dispersion.LSCOdispersion()
 initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
@@ -14,7 +14,7 @@ def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits([45*np.sin(np.deg2rad(theta)),0,45*np.cos(np.deg2rad(theta))],0.05)
     orbitsinstance.createOrbitsEQS(0.051)
-    orbitsinstance.plotOrbitsEQS()
+    #orbitsinstance.plotOrbitsEQS() enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
     conductivityInstance.createAlpha()
