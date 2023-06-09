@@ -5,7 +5,7 @@ import orbitcreation
 import conductivity
 from makesigmalist import makelist_parallel
 
-thetalist = np.linspace(10,80,20)
+thetalist = np.linspace(0,80,20)
 
 dispersionInstance = dispersion.LSCOdispersion()
 initialpointsInstance = orbitcreation.InitialPoints(160,dispersionInstance,True)
