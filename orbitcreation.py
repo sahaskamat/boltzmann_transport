@@ -60,7 +60,7 @@ class Orbits:
         """
         #list of orbits
         sol = []
-        self.B = B
+        self.B = np.array(B)*6.47485778027889
         #B_normalized = np.array(B)/np.linalg.norm(B)
         B_normalized = np.array(B)/np.linalg.norm(B)
         self.termination_resolution = termination_resolution
