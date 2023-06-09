@@ -1,14 +1,14 @@
+import numpy as np
+import matplotlib.pyplot as plt
 import dispersion
 import orbitcreation
 import conductivity
-import numpy as np
-import matplotlib.pyplot as plt
 from makesigmalist import makelist_parallel
 
 thetalist = np.linspace(10,80,20)
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InitialPoints(160,dispersionInstance,True)
 
 def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
