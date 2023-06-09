@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class InitialPoints:
     """
-    Inputs: 
+    Inputs:
     n (number of initial points)
     dispersion (object of class dispersion)
     doublefermisurface (True if fermi surface extends from 2Pi/c to -2Pi/c like LSCO)
@@ -46,28 +46,28 @@ class Orbits:
         self.dispersion = dispersion
         self.k0 = initialpoints.k0
 
-        
+
     def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
         """
-        Inputs: 
+        Inputs:
         B (magnetic field 3-vector)
         termination_resolution (radius in which integration terminates, default value 0.05)
         sampletimes (times at which to sample solution)
         mult_factor (multiplication factor for B during integration: larger means faster integration, but greater than 10 and integration breaks ihavenoideawhy)
-        
+
         Creates:
         List of orbits, orbits
         """
         #list of orbits
         sol = []
-        self.B = np.array(B)*6.47485778027889
+        self.B = np.array(B)
         #B_normalized = np.array(B)/np.linalg.norm(B)
         B_normalized = np.array(B)/np.linalg.norm(B)
         self.termination_resolution = termination_resolution
 
         #the force v \cross B term but now with fixed B
         RHS_withB = lambda t,k : self.dispersion.RHS_numeric(k,mult_factor*B_normalized)
-                
+
         #timestamps on which to sample the solution
         t_span = (sampletimes[0],sampletimes[-1])
 
@@ -83,7 +83,7 @@ class Orbits:
 
     def createOrbitsEQS(self,resolution = 0.051):
         """
-        Inputs: 
+        Inputs:
         resolution (integration resolution)
 
         Creates:
@@ -93,7 +93,7 @@ class Orbits:
         self.orbitsEQS = []
         self.resolution = resolution
 
-        if self.resolution <= self.termination_resolution: raise Exception("Integration resolution less than termination resolution")
+        if self.resolution <= self.termination_resolution: print("Integration resolution less than termination resolution")
 
         #check to make sure createOrbits() has been executed:
 
