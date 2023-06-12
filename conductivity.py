@@ -43,7 +43,7 @@ class Conductivity:
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*43.32)
+                self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
@@ -62,7 +62,10 @@ class Conductivity:
             submatrixindex += len(orbit)
             submatrixindexlist.append(submatrixindex) 
 
-        self.Ainv = np.matrix(np.linalg.inv(self.A))
+        #adding the scattering in terms for isotropic scattering
+        self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
+
+        self.Ainv = np.matrix(np.linalg.pinv(self.A))
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface

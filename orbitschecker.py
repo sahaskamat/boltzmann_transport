@@ -4,9 +4,8 @@ import conductivity
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(5,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(1,dispersionInstance,False)
 
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
@@ -20,4 +19,7 @@ conductivityInstance.createSigma()
 rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
 
 print(rhoxy)
-print((42E-3)/(rhoxy))
+print((42.689E-3)/(rhoxy))
+
+orbitsinstance.plotOrbits()
+orbitsinstance.plotOrbitsEQS()
