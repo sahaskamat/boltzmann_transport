@@ -5,16 +5,16 @@ import orbitcreation
 import conductivity
 from makesigmalist import makelist_parallel
 
-thetalist = np.linspace(0,80,20)
+thetalist = np.linspace(0,50,10)
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InitialPoints(160,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
 
 def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits([45*np.sin(np.deg2rad(theta)),0,45*np.cos(np.deg2rad(theta))],0.05)
-    orbitsinstance.createOrbitsEQS(0.051)
-    #orbitsinstance.plotOrbitsEQS() enable plotting for diagnostic purposes
+    orbitsinstance.createOrbits([2*np.pi*45*np.sin(np.deg2rad(theta)),0,2*np.pi*45*np.cos(np.deg2rad(theta))],0.1)
+    orbitsinstance.createOrbitsEQS(0.05)
+    #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
     conductivityInstance.createAlpha()

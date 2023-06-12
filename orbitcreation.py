@@ -77,7 +77,7 @@ class Orbits:
             event_fun = lambda t,k : np.linalg.norm(np.array(k)-np.array(initial)) - termination_resolution # define event function
             event_fun.terminal = True # make event function terminal
             event_fun.direction = -1 #event function only triggered when it is decreasing
-            sol.append(np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-6,atol=1e-7).y))  # use dense_output=True and events argument
+            sol.append(np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
 
         self.orbits = sol
 
@@ -93,7 +93,7 @@ class Orbits:
         self.orbitsEQS = []
         self.resolution = resolution
 
-        if self.resolution <= self.termination_resolution: print("Integration resolution less than termination resolution")
+        #if self.resolution <= self.termination_resolution: print("Integration resolution less than termination resolution")
 
         #check to make sure createOrbits() has been executed:
 

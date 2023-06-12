@@ -29,12 +29,12 @@ class Conductivity:
         i=0
 
         #number that denotes the index of the beginning of the current submatrix
-        submatrixindex = 0 
+        submatrixindex = 0
         submatrixindexlist = [0] #keeps track of all submatrix starting points
 
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
-                
+
             for state in orbit:
                 #diagonal term coming from scattering out
                 self.A[i,i]  += self.dispersionInstance.invtau(state)
@@ -60,10 +60,17 @@ class Conductivity:
                 i += 1
 
             submatrixindex += len(orbit)
-            submatrixindexlist.append(submatrixindex) 
+            submatrixindexlist.append(submatrixindex)
 
-        #adding the scattering in terms for isotropic scattering
-        self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
+        #adding the scattering in terms for isotropic scattering:
+        #self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
+        #i=0
+        #for orbit in self.orbitsInstance.orbitsEQS:
+        #    m = len(orbit) #m x m is the size of the submatrix for this orbit
+        #    for state in orbit:
+        #        for j in range(n):
+        #            self.A[i,j] -= self.dispersionInstance.invtau(state)/n
+        #        i +=1
 
         self.Ainv = np.matrix(np.linalg.pinv(self.A))
 
@@ -102,7 +109,7 @@ class Conductivity:
                         nextpoint = curve[(j+1)%len(curve)]
                         patcharea = np.linalg.norm(np.cross(state-nextpoint,self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz[curvenum])))
 
-                        self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea 
+                        self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea
                         self.areasum += patcharea
 
-                        i+=1 
+                        i+=1
