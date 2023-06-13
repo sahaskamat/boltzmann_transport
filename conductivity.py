@@ -43,7 +43,7 @@ class Conductivity:
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                self.A[i,i_next] += 2*np.pi*np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex]))
+                self.A[i,i_next] += ((2*np.pi))*np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex]))
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
@@ -84,10 +84,10 @@ class Conductivity:
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
-        self.sigma = np.zeros([3,3])
+        self.sigma = np.zeros([2,2])
 
-        for mu in range(3):
-            for nu in range(3):
+        for mu in range(2):
+            for nu in range(2):
                 #this keeps track of the total area over which we integrate
                 self.areasum = 0
                 #i is an iterator that iterates over the hilbert space
@@ -97,9 +97,9 @@ class Conductivity:
                     #j is an iterator that iterates over the current orbit
                     for j,state in enumerate(curve):
                         nextpoint = curve[(j+1)%len(curve)]
-                        patcharea = np.linalg.norm(np.cross(state-nextpoint,self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz[curvenum])))
+                        patcharea = dispersion.deltap(state,nextpoint)
 
-                        self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea 
+                        self.sigma[mu,nu] += ((2*np.pi)/(4*(np.pi)**3))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea 
                         self.areasum += patcharea
 
                         i+=1 
