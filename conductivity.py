@@ -44,6 +44,8 @@ class Conductivity:
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
                 self.A[i,i_next] += ((2*np.pi))*np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex]))
+                #testing if vxB factors are correct
+                #print(((2*np.pi))*np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B)))
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)

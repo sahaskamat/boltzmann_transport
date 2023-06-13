@@ -7,18 +7,14 @@ from makesigmalist import makelist_parallel
 
 maglist = np.linspace(0,10,10)
 
-dispersionInstance = dispersion.FreeElectronDispersion(1,2,0.01)
+dispersionInstance = dispersion.FreeElectronDispersion(1,2)
 initialpointsInstance = orbitcreation.InitialPoints(1,dispersionInstance,False)
-
-orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-orbitsinstance.createOrbits([0,0,1],0.01)
-orbitsinstance.createOrbitsEQS(0.68)
-orbitsinstance.plotOrbitsEQS()
 
 def getsigma(mag):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits([0,0,mag],0.01)
     orbitsinstance.createOrbitsEQS(0.68)
+    orbitsinstance.plotOrbitsEQS()
 
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()

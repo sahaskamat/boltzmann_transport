@@ -16,7 +16,7 @@ class FreeElectronDispersion:
     Class represents a two dimensional free electron dispersion
     Contains symbolic calculations that are lambdified to generate numeric values of important dispersion parameters
     """
-    def __init__(self,a,c,mu=0.01):
+    def __init__(self,a,c,mu=1):
         #define lattice constants in angstroms
         self.a = a
         self.b = a
@@ -26,7 +26,7 @@ class FreeElectronDispersion:
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
-        en = (kx**2 + ky**2 )/(8*(np.pi**2)) - mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
+        en = ((kx**2 + ky**2 )/(8*(np.pi**2)*0.01)) - mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
         graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
         from sympy.vector import CoordSys3D
