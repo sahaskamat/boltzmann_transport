@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(5,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(10,dispersionInstance,False)
 
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
@@ -17,7 +17,7 @@ conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstan
 conductivityInstance.createAMatrix()
 conductivityInstance.createAlpha()
 conductivityInstance.createSigma()
-rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
+rhoxy = np.linalg.inv(np.array([[conductivityInstance.sigma[0,0],conductivityInstance.sigma[0,1]],[conductivityInstance.sigma[1,0],conductivityInstance.sigma[1,1]]]))[0,1]
 
 print(rhoxy)
 print((42E-3)/(rhoxy))
