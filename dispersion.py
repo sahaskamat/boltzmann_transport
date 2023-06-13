@@ -41,8 +41,8 @@ class FreeElectronDispersion:
         #this is v \cross B converted to a scipy matrix
         force = gradvec.cross(Bvec).to_matrix(R)
         force = force.transpose()
- 
-        #this converts v \cross B into a numerical function that can be passed to scipy.odeint 
+
+        #this converts v \cross B into a numerical function that can be passed to scipy.odeint
         force_numeric = symp.lambdify([kx,ky,kz,Bx,By,Bz],force)
         self.RHS_numeric = lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0]
 
@@ -57,17 +57,17 @@ class FreeElectronDispersion:
         return 1/100 #placeholder value of time constant for isotropic scattering out matrix
 
     def dedk(self,p):
-        #takes input p as a list of [px,py,pz] and returns of de/dk at that p          
+        #takes input p as a list of [px,py,pz] and returns of de/dk at that p
         return np.array(self.graden_numeric(p[0],p[1],p[2]))
-    
+
     def dkperp(self,p,B,dkz):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
         nvec = np.cross(self.dedk(p),np.cross(self.dedk(p),B)) #nvec = dedk x (dedk x B)
-        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B)) 
+        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B))
         dkperp = scalar_term*nvec
         return dkperp
-    
+
 class LSCOdispersion:
     """
     Inputs:
@@ -89,7 +89,7 @@ class LSCOdispersion:
         self.c = 2*6.6
 
         #hopping parameters in eV from Yawen and Gael's paper:
-        T = 160*(10**(-3))
+        T = (160-30)*(10**(-3))
         T1 = -0.1364*T
         T11 = 0.0682*T
         Tz = 0.0651*T
@@ -117,8 +117,8 @@ class LSCOdispersion:
         #this is v \cross B converted to a scipy matrix
         force = gradvec.cross(Bvec).to_matrix(R)
         force = force.transpose()
-    
-        #this converts v \cross B into a numerical function that can be passed to scipy.odeint 
+
+        #this converts v \cross B into a numerical function that can be passed to scipy.odeint
         force_numeric = symp.lambdify([kx,ky,kz,Bx,By,Bz],force)
         self.RHS_numeric = lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0]
 
@@ -141,13 +141,13 @@ class LSCOdispersion:
         return (invtau_iso + invtau_aniso*self.angledependence(p))
 
     def dedk(self,p):
-        #takes input p as a list of [px,py,pz] and returns of de/dk at that p          
+        #takes input p as a list of [px,py,pz] and returns of de/dk at that p
         return np.array(self.graden_numeric(p[0],p[1],p[2]))
 
     def dkperp(self,p,B,dkz):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
         nvec = np.cross(self.dedk(p),np.cross(self.dedk(p),B)) #nvec = dedk x (dedk x B)
-        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B)) 
+        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B))
         dkperp = scalar_term*nvec
         return dkperp
