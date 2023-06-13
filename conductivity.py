@@ -101,7 +101,7 @@ class Conductivity:
                         nextpoint = curve[(j+1)%len(curve)]
                         patcharea = dispersion.deltap(state,nextpoint)
 
-                        self.sigma[mu,nu] += ((2*np.pi)/(4*(np.pi)**3))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea 
+                        self.sigma[mu,nu] +=(1/(2*np.pi))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea 
                         self.areasum += patcharea
 
                         i+=1 
