@@ -37,13 +37,13 @@ class Conductivity:
 
             for state in orbit:
                 #diagonal term coming from scattering out
-                self.A[i,i]  += self.dispersionInstance.invtau(state)
+                self.A[i,i]  = self.dispersionInstance.invtau(state)
 
                 #off diagonal terms that simulate the derivative term from the boltzmann equation
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+                self.A[i,i_next] = np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
@@ -52,7 +52,7 @@ class Conductivity:
                 #print(deltap(orbit1[i_next-submatrixindex],orbit1[i_prev - submatrixindex]))
                 #print(state)
 
-                self.A[i,i_prev] += -self.A[i,i_next]
+                self.A[i,i_prev] = -self.A[i,i_next]
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i] += -self.A[i,i_next]
@@ -72,7 +72,7 @@ class Conductivity:
         #            self.A[i,j] -= self.dispersionInstance.invtau(state)/n
         #        i +=1
 
-        self.Ainv = np.matrix(np.linalg.pinv(self.A))
+        self.Ainv = np.matrix(np.linalg.inv(self.A))
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
