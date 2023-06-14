@@ -26,7 +26,7 @@ class FreeElectronDispersion:
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
-        en = 0.579*(kx**2 + ky**2 + 0.001*symp.cos(kz*c)) - mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
+        en = 3.8099820794*(kx**2 + ky**2 + 0.0000001*symp.cos(kz*c)) - mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
         graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
         from sympy.vector import CoordSys3D

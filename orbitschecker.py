@@ -5,12 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(10,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,False)
 
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-orbitsinstance.createOrbits([0,0,1],0.02)
-orbitsinstance.createOrbitsEQS(0.021)
+orbitsinstance.createOrbits([0,0,1],0.01)
+orbitsinstance.createOrbitsEQS(0.011)
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
 conductivityInstance.createAMatrix()
@@ -20,10 +20,10 @@ rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
 rhoxx = np.linalg.inv(conductivityInstance.sigma)[0,0]
 
 print(rhoxy)
-print((42.689E-3)/(rhoxy*np.pi*2))
+print((42.689824241E-3)/(rhoxy))
 
 print(rhoxx)
-print(2.4271E-3/rhoxx)
+print(2.42718549066E-3/rhoxx)
 
 orbitsinstance.plotOrbits()
 orbitsinstance.plotOrbitsEQS()
