@@ -1,4 +1,5 @@
 import numpy as np
+import scipy as sp
 import dispersion
 
 class Conductivity:
@@ -72,7 +73,8 @@ class Conductivity:
         #            self.A[i,j] -= self.dispersionInstance.invtau(state)/n
         #        i +=1
 
-        self.Ainv = np.matrix(np.linalg.inv(self.A))
+       # Skipping matrix inversion in favor of solve
+       # self.Ainv = np.matrix(np.linalg.inv(self.A))
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
@@ -89,7 +91,8 @@ class Conductivity:
         self.moddedk_array = np.matrix(moddedk_list)
 
         #multiply Ainv with the ath component of dedk to obtain alpha
-        self.alpha = np.matmul(self.Ainv,self.dedk_array)
+        #multiplying by Ainv directly replaced by solving the equation
+        self.alpha = sp.linalg.solve(self.A,self.dedk_array)
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
