@@ -18,9 +18,9 @@ def getsigma(theta):
     #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
-    print(f'matrixinversion performed for {theta}')
     conductivityInstance.createAlpha()
     conductivityInstance.createSigma()
+    print(f'matrixinversion performed for {theta}')
     return conductivityInstance.sigma,conductivityInstance.areasum
 
 sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
