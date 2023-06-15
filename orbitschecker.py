@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(10,dispersionInstance,False)
 
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)

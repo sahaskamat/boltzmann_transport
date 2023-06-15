@@ -24,7 +24,9 @@ class Conductivity:
             n  += len(orbit)
 
         #units of A are ps-1
-        self.A = np.zeros((n,n))
+        Adata = []
+        Aposition_i = []
+        Aposition_j = []
 
         #i is an iterator that iterates over the hilbert space
         i=0
@@ -38,13 +40,18 @@ class Conductivity:
 
             for state in orbit:
                 #diagonal term coming from scattering out
-                self.A[i,i]  = self.dispersionInstance.invtau(state)
+                Adata.append(self.dispersionInstance.invtau(state))
+                Aposition_i.append(i)
+                Aposition_j.append(i)
 
                 #off diagonal terms that simulate the derivative term from the boltzmann equation
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                self.A[i,i_next] = np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+                graddata = np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+                Adata.append(graddata)
+                Aposition_i.append(i)
+                Aposition_j.append(i_next)
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
@@ -53,7 +60,9 @@ class Conductivity:
                 #print(deltap(orbit1[i_next-submatrixindex],orbit1[i_prev - submatrixindex]))
                 #print(state)
 
-                self.A[i,i_prev] = -self.A[i,i_next]
+                Adata.append(-graddata)
+                Aposition_i.append(i)
+                Aposition_j.append(i_prev)
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i] += -self.A[i,i_next]
@@ -63,6 +72,8 @@ class Conductivity:
             submatrixindex += len(orbit)
             submatrixindexlist.append(submatrixindex)
 
+        #create sparese Amatrix:
+        self.A = sp.sparse.csr_array((Adata,(Aposition_i,Aposition_j)),shape = (n,n))
         #adding the scattering in terms for isotropic scattering:
         #self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
         #i=0
@@ -92,7 +103,7 @@ class Conductivity:
 
         #multiply Ainv with the ath component of dedk to obtain alpha
         #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = sp.linalg.solve(self.A,self.dedk_array)
+        self.alpha = sp.sparse.linalg.spsolve(self.A,self.dedk_array)
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
