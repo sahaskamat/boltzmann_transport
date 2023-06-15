@@ -121,9 +121,12 @@ class Conductivity:
                     #j is an iterator that iterates over the current orbit
                     for j,state in enumerate(curve):
                         nextpoint = curve[(j+1)%len(curve)]
-                        patcharea = np.linalg.norm(np.cross(state-nextpoint,self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz[curvenum])))
+                        patcharea = 1 #removing areas np.linalg.norm(np.cross(state-nextpoint,self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz[curvenum])))
 
                         self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea
                         self.areasum += patcharea
 
                         i+=1
+
+        self.sigma = self.sigma/self.n
+        self.areasum = self.areasum/self.n
