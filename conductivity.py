@@ -19,9 +19,9 @@ class Conductivity:
     def createAMatrix(self):
         #n is the number of total points in our list, which is also the number of states in our Hilbert space,
         #and hence n x n is the size of our A matrix
-        n = 0
+        self.n = 0
         for orbit in self.orbitsInstance.orbitsEQS:
-            n  += len(orbit)
+            self.n  += len(orbit)
 
         #units of A are ps-1
         Adata = []
@@ -73,7 +73,7 @@ class Conductivity:
             submatrixindexlist.append(submatrixindex)
 
         #create sparese Amatrix:
-        self.A = sp.sparse.csr_array((Adata,(Aposition_i,Aposition_j)),shape = (n,n))
+        self.A = sp.sparse.csr_array((Adata,(Aposition_i,Aposition_j)),shape = (self.n,self.n))
         #adding the scattering in terms for isotropic scattering:
         #self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
         #i=0
