@@ -12,7 +12,7 @@ initialpointsInstance = orbitcreation.InitialPoints(160,dispersionInstance,True)
 
 def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits([0,45*np.sin(np.deg2rad(80)),45*np.cos(np.deg2rad(80))],0.05)
+    orbitsinstance.createOrbits([0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))],0.05)
     orbitsinstance.createOrbitsEQS(0.051)
     print(f'orbitcreation completed for {theta} degrees')
     #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
