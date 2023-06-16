@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(10,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,False)
 
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
@@ -25,5 +25,3 @@ print((42.689824241E-3)/(rhoxy))
 print(rhoxx)
 print(2.42718549066E-3/rhoxx)
 
-orbitsinstance.plotOrbits()
-orbitsinstance.plotOrbitsEQS()

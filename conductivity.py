@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import dispersion
+import cupy as cp
 
 class Conductivity:
     """
@@ -24,7 +25,7 @@ class Conductivity:
             self.n  += len(orbit)
 
         #units of A are ps-1
-        self.A = np.zeros((n,n))
+        self.A = cp.zeros((self.n,self.n))
 
         #i is an iterator that iterates over the hilbert space
         i=0
@@ -87,12 +88,12 @@ class Conductivity:
                 moddedk_list.append(self.dispersionInstance.dedk(state)/np.linalg.norm(self.dispersionInstance.dedk(state)))
 
         #convert list to nparray
-        self.dedk_array = np.matrix(dedk_list)
-        self.moddedk_array = np.matrix(moddedk_list)
+        self.dedk_array = cp.array(dedk_list)
+        self.moddedk_array = cp.array(moddedk_list)
 
         #multiply Ainv with the ath component of dedk to obtain alpha
         #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = sp.linalg.solve(self.A,self.dedk_array)
+        self.alpha = cp.linalg.solve(self.A,self.dedk_array)
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
