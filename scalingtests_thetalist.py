@@ -5,14 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from makesigmalist import makelist_parallel
 
-thetalist = np.linspace(10,60,10)
+thetalist = np.linspace(0,80,20)
 
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
-initialpointsInstance = orbitcreation.InitialPoints(5,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(80,dispersionInstance,False)
 
 def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits([1*np.sin(np.deg2rad(theta)),0,1*np.cos(np.deg2rad(theta))],0.04)
+    orbitsinstance.createOrbits([0,1*np.sin(np.deg2rad(theta)),1*np.cos(np.deg2rad(theta))],0.04)
     orbitsinstance.createOrbitsEQS(0.041)
 
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -26,6 +26,11 @@ sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 rhoxylist= [rho[0,0] for rho in rholist]
 
 plt.scatter(thetalist,rhoxylist)
+plt.ylabel(r"$\rho$ ($10^{-9} \Omega$ cm )")
+plt.xlabel(r'$\theta$')
+plt.show()
+
+plt.scatter(thetalist,arealist)
 plt.ylabel(r"$\rho$ ($10^{-9} \Omega$ cm )")
 plt.xlabel(r'$\theta$')
 plt.show()
