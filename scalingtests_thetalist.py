@@ -31,6 +31,6 @@ plt.xlabel(r'$\theta$')
 plt.show()
 
 plt.scatter(thetalist,arealist)
-plt.ylabel(r"$\rho$ ($10^{-9} \Omega$ cm )")
+plt.ylabel(r"Area $(\AA^2)$")
 plt.xlabel(r'$\theta$')
 plt.show()
