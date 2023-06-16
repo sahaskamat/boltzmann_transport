@@ -5,10 +5,10 @@ import orbitcreation
 import conductivity
 from makesigmalist import makelist_parallel
 
-thetalist = np.linspace(10,80,20)
+thetalist = np.linspace(0,80,20)
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InitialPoints(160,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,True)
 
 def getsigma(theta):
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
@@ -18,21 +18,21 @@ def getsigma(theta):
     #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
-    print(f'matrixinversion performed for {theta}')
     conductivityInstance.createAlpha()
     conductivityInstance.createSigma()
+    print(f'matrixinversion performed for {theta}')
     return conductivityInstance.sigma,conductivityInstance.areasum
 
 sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 
-rhoxylist= [rho[2,2] for rho in rholist]
+rhoxylist= [rho[2,2]*1E-4 for rho in rholist]
 
 plt.scatter(thetalist,rhoxylist)
-plt.ylabel(r"$\rho$ ($10^{-9} \Omega$ cm )")
+plt.ylabel(r"$\rho$ ($10^{-9} m\Omega$ cm )")
 plt.xlabel(r'$\theta$')
 plt.show()
 
 plt.scatter(thetalist,arealist)
-plt.ylabel(r"$\rho$ ($10^{-9} \Omega$ cm )")
+plt.ylabel(r"$\rho$ ($10^{-9} m\Omega$ cm )")
 plt.xlabel(r'$\theta$')
 plt.show()
