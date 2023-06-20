@@ -3,6 +3,9 @@ import orbitcreation
 import conductivity
 import numpy as np
 import matplotlib.pyplot as plt
+from time import time
+
+starttime = time()
 
 dispersionInstance = dispersion.LSCOdispersion()
 initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
@@ -16,6 +19,8 @@ conductivityInstance.createAMatrix()
 conductivityInstance.createAlpha()
 conductivityInstance.createSigma()
 
-print(initialpointsInstance.k0)
+endtime = time()
+print(f"Execution time= {endtime-starttime}")
+
 orbitsinstance.plotOrbitsEQS()
 rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
