@@ -19,11 +19,11 @@ conductivityInstance.createSigma()
 rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
 rhoxx = np.linalg.inv(conductivityInstance.sigma)[0,0]
 
-print(rhoxy)
-print((42.689824241E-3)/(rhoxy))
+print(f"Absolute value for rhoxy: {rhoxy}")
+print(f"Relative value of rhoxy: {(42.689824241E-3)/(rhoxy)}")
 
-print(rhoxx)
-print(2.42718549066E-3/rhoxx)
+print(f"Absolute value for rhoxx: {rhoxx}")
+print(f"Relative value of rhoxx: {2.42718549066E-3/rhoxx}")
 
 orbitsinstance.plotOrbits()
 orbitsinstance.plotOrbitsEQS()
