@@ -1,12 +1,19 @@
 import numpy as np
 import cupy as cp
+import time
 
-x_gpu =  cp.array([1,2,3])
-norm = cp.linalg.norm(x_gpu)
-print(norm)
+n=82800000
+a = cp.empty((n,2,2),dtype=np.float32)
+v = cp.empty((n,2),dtype=np.float32)
 
-x_matrix = cp.array([[1,2,3],[4,5,6],[7,8,10]])
-inverse = cp.linalg.inv(x_matrix)
-print(inverse)
+a[:,0,0]=a[:,1,1]=1; a[:,1,0]=a[:,0,1]=0
+v[0]=0; v[1]=1
 
-print(inverse*x_gpu)
+t0=time.time()
+cp.linalg.solve(a,v)
+t1=time.time()
+np.linalg.solve(a.get(),v.get())
+t2=time.time()
+
+t_cupy,t_numpy=t1-t0,t2-t1
+print(f"t_cupy={t_cupy}, t_numpy={t_numpy}, ratio={t_cupy/t_numpy}")

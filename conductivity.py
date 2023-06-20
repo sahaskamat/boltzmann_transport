@@ -34,6 +34,7 @@ class Conductivity:
         submatrixindex = 0
         submatrixindexlist = [0] #keeps track of all submatrix starting points
 
+        print("beginning Amatrix creation")
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
 
@@ -64,6 +65,7 @@ class Conductivity:
             submatrixindex += len(orbit)
             submatrixindexlist.append(submatrixindex)
 
+        print("created Amatrix")
         #adding the scattering in terms for isotropic scattering:
         #self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
         #i=0
@@ -89,17 +91,20 @@ class Conductivity:
 
         #convert list to nparray
         self.dedk_array = cp.array(dedk_list)
-        self.moddedk_array = cp.array(moddedk_list)
+        self.moddedk_array = np.array(moddedk_list)
 
         #multiply Ainv with the ath component of dedk to obtain alpha
         #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = cp.linalg.solve(self.A,self.dedk_array)
+        print("beginning solve")
+        self.alpha = cp.asnumpy(np.linalg.solve(self.A,self.dedk_array))
+        print(f"solved, type= {type(self.alpha)}")
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])
 
+        print("beginning sum")
         for mu in range(3):
             for nu in range(3):
                 #this keeps track of the total area over which we integrate
@@ -117,3 +122,4 @@ class Conductivity:
                         self.areasum += patcharea
 
                         i+=1
+        print("summed")

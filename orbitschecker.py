@@ -16,6 +16,7 @@ conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstan
 conductivityInstance.createAMatrix()
 conductivityInstance.createAlpha()
 conductivityInstance.createSigma()
+print(conductivityInstance.n)
 rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
 rhoxx = np.linalg.inv(conductivityInstance.sigma)[0,0]
 
