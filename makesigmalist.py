@@ -21,7 +21,7 @@ def makelist_parallel(sigmaarea_function,inputslist):
     Outputs: sigmalist,rholist,arealist
     """
     #execute sigma_function paralelly over thetalist to obtain sigmas and areas
-    sigmaarealist = Parallel(n_jobs=int(cpus/2))(delayed(sigmaarea_function)(inputinstance) for inputinstance in inputslist)
+    sigmaarealist = Parallel(n_jobs=int(cpus))(delayed(sigmaarea_function)(inputinstance) for inputinstance in inputslist)
 
     sigmalist = [sigmaarealist[i][0] for i in range(len(sigmaarealist))]
     arealist = [sigmaarealist[i][1] for i in range(len(sigmaarealist))]
