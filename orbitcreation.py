@@ -106,8 +106,8 @@ class Orbits:
             event_fun.direction = -1 #event function only triggered when it is decreasing
             return (np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
 
-        #self.orbits = [createsingleorbit(initial) for initial in self.k0]
-        self.orbits = Parallel(n_jobs=int(cpus/2))(delayed(createsingleorbit)(initial) for initial in self.k0)
+        self.orbits = [createsingleorbit(initial) for initial in self.k0]
+        #self.orbits = Parallel(n_jobs=int(cpus/2))(delayed(createsingleorbit)(initial) for initial in self.k0)
 
         #end timer
         endtime = time()
