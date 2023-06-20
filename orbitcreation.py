@@ -3,6 +3,7 @@ from scipy.optimize import fsolve
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+from time import time
 
 class InitialPoints:
     """
@@ -17,6 +18,8 @@ class InitialPoints:
     """
 
     def __init__(self,n,dispersion,doublefermisurface):
+        starttime = time()
+        
         self.k0 = [] #this is the list of initial conditions evenly spaced in the z direction
         self.dkz = [] #list of differences of starting points of orbits (vector)
         self.dispersion = dispersion
@@ -39,6 +42,9 @@ class InitialPoints:
                 self.k0.append(thisk0)
                 self.dkz.append(thisk0 - previousk0)
                 previousk0 = thisk0
+
+        endtime = time()
+        print(f"Time to create initialpoints: {endtime-starttime}")
 
 
 class Orbits:
