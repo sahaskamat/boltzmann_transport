@@ -5,6 +5,27 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from time import time
 
+
+
+######################## 
+# Module to find number of CPUS
+##########################
+import multiprocessing
+from joblib import delayed, Parallel
+
+#find number of cpus
+try:
+    cpus = multiprocessing.cpu_count()
+except NotImplementedError:
+    cpus = 2   # arbitrary default
+
+if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
+######################## 
+# Module to find number of CPUS
+##########################
+
+
+
 class InitialPoints:
     """
     Inputs:
@@ -64,10 +85,10 @@ class Orbits:
         Creates:
         List of orbits, orbits
         """
-        #list of orbits
-        sol = []
+        #start timer
+        starttime = time()
+
         self.B = np.array(B)
-        #B_normalized = np.array(B)/np.linalg.norm(B)
         B_normalized = np.array(B)/np.linalg.norm(B)
         self.termination_resolution = termination_resolution
 
@@ -78,14 +99,20 @@ class Orbits:
         t_span = (sampletimes[0],sampletimes[-1])
 
         #iterate over different initial conditions, each corresponding to a given orbit
-        for initial in self.k0:
+        def createsingleorbit(initial):
             # solve differential equation to find a single orbit
             event_fun = lambda t,k : np.linalg.norm(np.array(k)-np.array(initial)) - termination_resolution # define event function
             event_fun.terminal = True # make event function terminal
             event_fun.direction = -1 #event function only triggered when it is decreasing
-            sol.append(np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
+            return (np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
 
-        self.orbits = sol
+        #self.orbits = [createsingleorbit(initial) for initial in self.k0]
+        self.orbits = Parallel(n_jobs=int(cpus/2))(delayed(createsingleorbit)(initial) for initial in self.k0)
+
+        #end timer
+        endtime = time()
+
+        print(f"Time to create orbits: {endtime-starttime}")
 
     def createOrbitsEQS(self,resolution = 0.051):
         """
