@@ -148,8 +148,10 @@ class Orbits:
                     #this condition breaks the loop when you return to the starting point
                     if np.linalg.norm(currentpoint -startingpoint) < resolution:
                         break
-
-            self.orbitsEQS.append(orbit1EQS)
+            
+            #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
+            if not orbit1EQS.shape[0] < 3:
+                self.orbitsEQS.append(orbit1EQS)
 
     def plotOrbits(self):
         ax = plt.figure().add_subplot(projection='3d')

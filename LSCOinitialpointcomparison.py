@@ -51,7 +51,6 @@ class InitialPoints:
         endtime = time()
         print(f"Time to create initialpoints: {endtime-starttime}")
 
-
 #First calculation with improved initialpoints:
 """
 starttime = time()
@@ -84,7 +83,7 @@ initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
 orbitsinstance.createOrbits([1*np.sin(np.deg2rad(80)),0,1*np.cos(np.deg2rad(80))],0.1)
 orbitsinstance.createOrbitsEQS(0.05)
-orbitsinstance.plotOrbitsEQS()
+#orbitsinstance.plotOrbitsEQS()
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
 conductivityInstance.createAMatrix()
@@ -92,5 +91,6 @@ conductivityInstance.createAlpha()
 conductivityInstance.createSigma()
 
 endtime = time()
-print(f"Execution time= {endtime-starttime}")
+print(f"Execution time= {endtime-starttime}") 
 rhoxy = np.linalg.inv(conductivityInstance.sigma)[0,1]
+print(rhoxy)
