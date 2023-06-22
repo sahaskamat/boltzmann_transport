@@ -38,31 +38,36 @@ class InitialPoints:
 
     """
 
-    def __init__(self,n,dispersion,doublefermisurface):
-        starttime = time()
-        
-        self.k0 = [] #this is the list of initial conditions evenly spaced in the z direction
-        self.dkz = [] #list of differences of starting points of orbits (vector)
+    def __init__(self,n,dispersion,doublefermisurface,B):
+        """
+        n: number of initial points to create
+        dispersion: object of type dispersion
+        doublefermisurface: true if unit cell height is c/2 and not c
+        B: magnetic field. Note that code is currently only compatible with Bx = 0
+
+        """
         self.dispersion = dispersion
 
         if not isinstance(doublefermisurface,bool):
             raise Exception("Argument doublefermisurface is not a boolean")
 
         c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+        starttime = time()
+        
+        self.k0 = [np.array([0,0,kz0]) for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)] 
+        #this is the list of initial conditions evenly spaced in the z direction, lying along x=y=0.
+        #these will be used to create initial conditions lying on the fermi surface
 
-        #solve numeric function along the line kz = ky = 0
-        for iter_num, kz0 in enumerate(np.linspace(-(np.pi)/c,(np.pi)/c,n+1)):
+        self.klist1 = []
+        self.klist2 = []
 
-            if iter_num==0: #dont append first solution, this is only used to keep dkz consistent
-                kx0 = fsolve(lambda kx_numeric : self.dispersion.en_numeric(kx_numeric,0,kz0),0.6)[0]
-                previousk0 = np.array([kx0,0,kz0])
-            else:
-                kx0 = fsolve(lambda kx_numeric : self.dispersion.en_numeric(kx_numeric,0,kz0),0.6)[0]
-                thisk0 = np.array([kx0,0,kz0])
+        #solve numeric function along the kx = 0 lying in the plane of kz0 and perpendicular to the magnetic field
+        for iter_num, kz0 in self.k0:
+            ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a + 0.1)[0] #figure out why the [0] is here
+            self.klist1.append(np.array([0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]]))
 
-                self.k0.append(thisk0)
-                self.dkz.append(thisk0 - previousk0)
-                previousk0 = thisk0
+            ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a - 0.1)[0] #figure out why the [0] is here
+            self.klist2.append(np.array([0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]]))
 
         endtime = time()
         print(f"Time to create initialpoints: {endtime-starttime}")
