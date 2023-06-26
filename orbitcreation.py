@@ -43,7 +43,7 @@ class InitialPoints:
         n: number of initial points to create
         dispersion: object of type dispersion
         doublefermisurface: true if unit cell height is c/2 and not c
-        B: magnetic field. Note that code is currently only compatible with Bx = 0
+        B: magnetic field vector. Note that code is currently only compatible with Bx = 0
 
         """
         self.dispersion = dispersion
@@ -54,15 +54,18 @@ class InitialPoints:
         c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
         starttime = time()
         
-        self.k0 = [np.array([0,0,kz0]) for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)] 
+        self.k0 = np.array([[0,0,kz0] for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)]) 
         #this is the list of initial conditions evenly spaced in the z direction, lying along x=y=0.
         #these will be used to create initial conditions lying on the fermi surface
 
+        self.dkz = np.diff(self.k0,axis=0)[0] #dkz is a vector that takes you from one initial plane to the other
+
         self.klist1 = []
         self.klist2 = []
+        self.k0 = np.delete(self.k0,0,axis=0) #this deletes the first element of k0 to avoid over-tiling the fermi surface
 
         #solve numeric function along the kx = 0 lying in the plane of kz0 and perpendicular to the magnetic field
-        for iter_num, kz0 in self.k0:
+        for kz0 in self.k0:
             ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a + 0.1)[0] #figure out why the [0] is here
             self.klist1.append(np.array([0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]]))
 
@@ -76,7 +79,8 @@ class InitialPoints:
 class Orbits:
     def __init__(self,dispersion,initialpoints):
         self.dispersion = dispersion
-        self.k0 = initialpoints.k0
+        self.klist1 = initialpoints.klist1
+        self.klist2 = initialpoints.klist2
 
 
     def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
@@ -111,7 +115,8 @@ class Orbits:
             event_fun.direction = -1 #event function only triggered when it is decreasing
             return (np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
 
-        self.orbits = [createsingleorbit(initial) for initial in self.k0]
+        self.orbits1 = [createsingleorbit(initial) for initial in self.klist1]
+        self.orbits2 = [createsingleorbit(initial) for initial in self.klist2]
         #self.orbits = Parallel(n_jobs=int(cpus/2))(delayed(createsingleorbit)(initial) for initial in self.k0)
 
         #end timer
@@ -119,7 +124,7 @@ class Orbits:
 
         print(f"Time to create orbits: {endtime-starttime}")
 
-    def createOrbitsEQS(self,resolution = 0.051):
+    def createOrbitsEQS(self,resolution = 0.051,checkingtolerance = 1):
         """
         Inputs:
         resolution (integration resolution)
@@ -133,11 +138,8 @@ class Orbits:
 
         #if self.resolution <= self.termination_resolution: print("Integration resolution less than termination resolution")
 
-        #check to make sure createOrbits() has been executed:
-
-        #iterate over different orbits
-        for curve in self.orbits:
-
+        #create equally spaced orbit out of a single orbit
+        def appendSingleOrbitEQS(curve):
             #add initial point to equally spaced orbit
             startingpoint = curve[0]
             currentpoint  = startingpoint
@@ -156,12 +158,32 @@ class Orbits:
             
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
             if not orbit1EQS.shape[0] < 3:
-                self.orbitsEQS.append(orbit1EQS)
+                self.orbitsEQS.append(orbit1EQS)    
+
+        #check if both orbits are the same, and append only distinct orbits to orbitsEQS:
+        tolerance =checkingtolerance
+
+        def checkandappend(orbit1,orbit2,tolerance):
+            #MAKE THIS GENERAL
+            #this check only works if the two inital points for each plane are diametrically opposite points on the fermi surface
+            print("starting point on orbit1:",orbit1[0],"ending point of orbit1:",orbit1[-1])
+            print("starting point on orbit2:",orbit2[0],"ending point of orbit2:",orbit2[-1],"opposite point located at",int(orbit2.shape[0]/2),"opposite point:",orbit2[int(orbit2.shape[0]/2)])
+            if(np.linalg.norm(orbit2[int(orbit2.shape[0]/2)] - orbit1[0]) < tolerance): #this means that the orbits are the same
+                appendSingleOrbitEQS(orbit1) #only do this for a single orbit
+            else: #this means orbits are different
+                appendSingleOrbitEQS(orbit1)
+                appendSingleOrbitEQS(orbit2)
+
+        for id,orbit1 in enumerate(self.orbits1):
+            orbit2 = self.orbits2[id]
+            checkandappend(orbit1,orbit2,tolerance)
+                
 
     def plotOrbits(self):
+        #CURRENTLY DOES NOT WORK PLEASE FIX FOR ORBIT1 and ORBIT2
         ax = plt.figure().add_subplot(projection='3d')
 
-        for orbit1 in self.orbits:
+        for orbit1 in self.orbits1:
             ax.scatter(orbit1[:,0],orbit1[:,1], orbit1[:,2], label='parametric curve')
 
         plt.show()
