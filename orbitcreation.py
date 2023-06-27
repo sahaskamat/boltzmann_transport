@@ -52,13 +52,14 @@ class InitialPoints:
             raise Exception("Argument doublefermisurface is not a boolean")
 
         c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
-        starttime = time()
+        #starttime = time()
         
         self.k0 = np.array([[0,0,kz0] for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)]) 
         #this is the list of initial conditions evenly spaced in the z direction, lying along x=y=0.
         #these will be used to create initial conditions lying on the fermi surface
 
         self.dkz = np.diff(self.k0,axis=0)[0] #dkz is a vector that takes you from one initial plane to the other
+        #print(self.dkz)
 
         self.klist1 = []
         self.klist2 = []
@@ -72,8 +73,8 @@ class InitialPoints:
             ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a - 0.1)[0] #figure out why the [0] is here
             self.klist2.append(np.array([0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]]))
 
-        endtime = time()
-        print(f"Time to create initialpoints: {endtime-starttime}")
+        # endtime = time()
+        #time measuring diagnostic #print(f"Time to create initialpoints: {endtime-starttime}")
 
 
 class Orbits:
@@ -95,7 +96,7 @@ class Orbits:
         List of orbits, orbits
         """
         #start timer
-        starttime = time()
+        # starttime = time()
 
         self.B = np.array(B)
         B_normalized = np.array(B)/np.linalg.norm(B)
@@ -120,9 +121,9 @@ class Orbits:
         #self.orbits = Parallel(n_jobs=int(cpus/2))(delayed(createsingleorbit)(initial) for initial in self.k0)
 
         #end timer
-        endtime = time()
+        #endtime = time()
 
-        print(f"Time to create orbits: {endtime-starttime}")
+        #print(f"Time to create orbits: {endtime-starttime}")
 
     def createOrbitsEQS(self,resolution = 0.051,checkingtolerance = 1):
         """
@@ -166,8 +167,8 @@ class Orbits:
         def checkandappend(orbit1,orbit2,tolerance):
             #MAKE THIS GENERAL
             #this check only works if the two inital points for each plane are diametrically opposite points on the fermi surface
-            print("starting point on orbit1:",orbit1[0],"ending point of orbit1:",orbit1[-1])
-            print("starting point on orbit2:",orbit2[0],"ending point of orbit2:",orbit2[-1],"opposite point located at",int(orbit2.shape[0]/2),"opposite point:",orbit2[int(orbit2.shape[0]/2)])
+            #diagnostics #print("starting point on orbit1:",orbit1[0],"ending point of orbit1:",orbit1[-1])
+            #diagnostics #print("starting point on orbit2:",orbit2[0],"ending point of orbit2:",orbit2[-1],"opposite point located at",int(orbit2.shape[0]/2),"opposite point:",orbit2[int(orbit2.shape[0]/2)])
             if(np.linalg.norm(orbit2[int(orbit2.shape[0]/2)] - orbit1[0]) < tolerance): #this means that the orbits are the same
                 appendSingleOrbitEQS(orbit1) #only do this for a single orbit
             else: #this means orbits are different

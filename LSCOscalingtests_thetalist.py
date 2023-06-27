@@ -8,15 +8,17 @@ from time import time
 
 startime = time()
 
-thetalist = np.linspace(0,80,20)
-
-dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,True)
+thetalist = np.linspace(0,50,20)
 
 def getsigma(theta):
+    B = [0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))]
+
+    dispersionInstance = dispersion.LSCOdispersion()
+    initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,True,B)
+
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits([0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))],0.1)
-    orbitsinstance.createOrbitsEQS(0.101)
+    orbitsinstance.createOrbits(B,0.5)
+    orbitsinstance.createOrbitsEQS(0.501)
     print(f'orbitcreation completed for {theta} degrees')
     #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -24,11 +26,12 @@ def getsigma(theta):
     conductivityInstance.createAlpha()
     conductivityInstance.createSigma()
     print(f'matrixinversion performed for {theta}')
+    print(f"Calculated total area: {conductivityInstance.areasum}, number of orbits used {len(conductivityInstance.orbitsInstance.orbitsEQS)}")
     return conductivityInstance.sigma,conductivityInstance.areasum
 
 sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 
-rhoxylist= [rho[2,2]*1E-4 for rho in rholist]
+rhoxylist= [rho[2,2] for rho in rholist]
 
 endtime = time()
 print(f"execution time: {endtime-startime}")
