@@ -8,7 +8,7 @@ from time import time
 
 startime = time()
 
-thetalist = np.linspace(0,50,20)
+thetalist = np.linspace(0,80,20)
 
 def getsigma(theta):
     B = [0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))]
@@ -17,10 +17,10 @@ def getsigma(theta):
     initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,True,B)
 
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,0.5)
-    orbitsinstance.createOrbitsEQS(0.501)
+    orbitsinstance.createOrbits(B,0.1,mult_factor=0.5)
+    orbitsinstance.createOrbitsEQS(0.0701)
     print(f'orbitcreation completed for {theta} degrees')
-    #orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
+    if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
     conductivityInstance.createAlpha()
