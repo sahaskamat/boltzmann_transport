@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from time import time
 
 starttime = time()
-B = [0,1*np.sin(np.deg2rad(30)),1*np.cos(np.deg2rad(30))]
+B = [0,1*np.sin(np.deg2rad(70)),1*np.cos(np.deg2rad(70))]
 
 dispersionInstance = dispersion.LSCOdispersion()
 initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True,B)

@@ -67,10 +67,10 @@ class InitialPoints:
 
         #solve numeric function along the kx = 0 lying in the plane of kz0 and perpendicular to the magnetic field
         for kz0 in self.k0:
-            ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a + 0.1)[0] #figure out why the [0] is here
+            ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a+0.1,factor=0.1)[0] #figure out why the [0] is here
             self.klist1.append(np.array([0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]]))
 
-            ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a - 0.1)[0] #figure out why the [0] is here
+            ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a-0.1,factor=0.1)[0] #figure out why the [0] is here
             self.klist2.append(np.array([0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]]))
 
         # endtime = time()
@@ -114,7 +114,7 @@ class Orbits:
             event_fun = lambda t,k : np.linalg.norm(np.array(k)-np.array(initial)) - termination_resolution # define event function
             event_fun.terminal = True # make event function terminal
             event_fun.direction = -1 #event function only triggered when it is decreasing
-            return (np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-10).y))  # use dense_output=True and events argument
+            return (np.transpose(solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-9,atol=1e-15).y))  # use dense_output=True and events argument
 
         self.orbits1 = [createsingleorbit(initial) for initial in self.klist1]
         self.orbits2 = [createsingleorbit(initial) for initial in self.klist2]
