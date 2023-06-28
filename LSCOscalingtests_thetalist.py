@@ -18,14 +18,14 @@ def getsigma(theta):
 
     orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,0.1,mult_factor=0.5)
-    orbitsinstance.createOrbitsEQS(0.0701)
-    print(f'orbitcreation completed for {theta} degrees')
-    if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
+    orbitsinstance.createOrbitsEQS(0.0501)
+    #print(f'orbitcreation completed for {theta} degrees')
+    #if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
     conductivityInstance.createAMatrix()
     conductivityInstance.createAlpha()
     conductivityInstance.createSigma()
-    print(f'matrixinversion performed for {theta}')
+    #print(f'matrixinversion performed for {theta}')
     print(f"Calculated total area: {conductivityInstance.areasum}, number of orbits used {len(conductivityInstance.orbitsInstance.orbitsEQS)}")
     return conductivityInstance.sigma,conductivityInstance.areasum
 

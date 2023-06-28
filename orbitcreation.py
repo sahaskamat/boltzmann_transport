@@ -7,7 +7,7 @@ from time import time
 
 
 
-######################## 
+########################
 # Module to find number of CPUS
 ##########################
 import multiprocessing
@@ -20,10 +20,15 @@ except NotImplementedError:
     cpus = 2   # arbitrary default
 
 if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
-######################## 
+########################
 # Module to find number of CPUS
 ##########################
 
+class interpolatedCurves:
+
+    def __init__(self,npoints,dispersion,doublefermisurface,B=None,B_parr=None):
+        if B==None and B_parr==None:
+            raise Exception("Both B and B_parr are unspecified: cannot create interpolatedCurves")
 
 
 class InitialPoints:
@@ -53,8 +58,8 @@ class InitialPoints:
 
         c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
         #starttime = time()
-        
-        self.k0 = np.array([[0,0,kz0] for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)]) 
+
+        self.k0 = np.array([[0,0,kz0] for kz0 in np.linspace(-(np.pi)/c,(np.pi)/c,n+1)])
         #this is the list of initial conditions evenly spaced in the z direction, lying along x=y=0.
         #these will be used to create initial conditions lying on the fermi surface
 
@@ -67,11 +72,13 @@ class InitialPoints:
 
         #solve numeric function along the kx = 0 lying in the plane of kz0 and perpendicular to the magnetic field
         for kz0 in self.k0:
-            ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a+0.1,factor=0.1)[0] #figure out why the [0] is here
-            self.klist1.append(np.array([0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]]))
+            ky0 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),-np.pi/dispersion.a+0.1,factor=0.1,maxfev=500000)[0] #figure out why the [0] is here
 
-            ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a-0.1,factor=0.1)[0] #figure out why the [0] is here
-            self.klist2.append(np.array([0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]]))
+            if abs(self.dispersion.en_numeric(0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]))<1e-3 : self.klist1.append(np.array([0,ky0,(np.dot(kz0,B) - ky0*B[1])/B[2]])) #append solved point only if it lies on the FS
+
+            ky1 = fsolve(lambda ky_numeric : self.dispersion.en_numeric(0,ky_numeric,(np.dot(kz0,B) - ky_numeric*B[1])/B[2]),np.pi/dispersion.a-0.1,factor=0.1,maxfev=500000)[0] #figure out why the [0] is here
+
+            if abs(self.dispersion.en_numeric(0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]))<1e-3 : self.klist2.append(np.array([0,ky1,(np.dot(kz0,B) - ky1*B[1])/B[2]])) #append solved point only if it lies on the FS
 
         # endtime = time()
         #time measuring diagnostic #print(f"Time to create initialpoints: {endtime-starttime}")
@@ -156,10 +163,10 @@ class Orbits:
                     #this condition breaks the loop when you return to the starting point
                     if np.linalg.norm(currentpoint -startingpoint) < resolution:
                         break
-            
+
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
             if not orbit1EQS.shape[0] < 3:
-                self.orbitsEQS.append(orbit1EQS)    
+                self.orbitsEQS.append(orbit1EQS)
 
         #check if both orbits are the same, and append only distinct orbits to orbitsEQS:
         tolerance =checkingtolerance
@@ -178,7 +185,7 @@ class Orbits:
         for id,orbit1 in enumerate(self.orbits1):
             orbit2 = self.orbits2[id]
             checkandappend(orbit1,orbit2,tolerance)
-                
+
 
     def plotOrbits(self):
         #CURRENTLY DOES NOT WORK PLEASE FIX FOR ORBIT1 and ORBIT2
