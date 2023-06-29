@@ -25,10 +25,44 @@ if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
 ##########################
 
 class interpolatedCurves:
+    """
+    Inputs:
+    npoints (number of points to solve for on each side of FS)
+    dispersion (object of class dispersion)
+    doublefermisurface (bool, True if unit cell size is c/2)
+    B_parr (list containing two floats, representing the in plane direction of B)
+    B (if B_parr is not supplied, in plane direction of B will be inferred)
+    """
 
-    def __init__(self,npoints,dispersion,doublefermisurface,B=None,B_parr=None):
-        if B==None and B_parr==None:
+    def __init__(self,npoints,dispersion,doublefermisurface,B_parr=None,B=None):
+        if B!=None:
+            self.theta = np.arctan(B[1]/B[0]) #theta = arctan(By/Bx)
+        elif B_parr!=None:
+            self.theta = np.arctan(B_parr[1]/B_parr[0]) #theta = arctan(By/Bx)
+        else:
             raise Exception("Both B and B_parr are unspecified: cannot create interpolatedCurves")
+
+        self.dispersion = dispersion
+
+        if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
+            raise Exception("Argument doublefermisurface is not a boolean")
+
+        c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+
+        self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found
+
+    def solveforpoints(self):
+        """
+        Solves for points on each side of the fermi surface
+        Inputs:
+        sign (decides the sign of theta along which to search for solutions. For a complete set, use both positive and negative)
+        """
+
+        def getpoint(startingZcoord):
+            point =
+
+
+
 
 
 class InitialPoints:
