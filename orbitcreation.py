@@ -24,7 +24,7 @@ if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
 # Module to find number of CPUS
 ##########################
 
-class interpolatedCurves:
+class InterpolatedCurves:
     """
     Inputs:
     npoints (number of points to solve for on each side of FS)
@@ -51,16 +51,37 @@ class interpolatedCurves:
 
         self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found
 
-    def solveforpoints(self):
+        self.initialpointsLists = [] #list of list of initialpoints. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
+
+    def solveforpoints(self,sign,parallelised=False):
         """
         Solves for points on each side of the fermi surface
         Inputs:
-        sign (decides the sign of theta along which to search for solutions. For a complete set, use both positive and negative)
+        sign (decides the sign of theta along which to search for solutions. For a complete set, use both "positive" and "negative")
+        parallelised (bool, True if solving for points is to be parallelised across cores)
         """
 
-        def getpoint(startingZcoord):
-            point =
+        if sign == "positive":
+            signfactor = 1
+        elif sign == "negative":
+            signfactor = -1
+        else:
+            raise Exception("Sign should be a string with value 'positive' or 'negative'")
 
+        def getpoint(startingZcoord):
+            """
+            solve for point lying on FS for a given z coordinate (sign is inherited from the method variable signfactor) 
+            """
+            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0] #figure out why the [0] is here
+            return np.array([r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord])
+        
+        #create startingpoints by iterating getpoints() over self.planeZcoords
+        if parallelised:
+            startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord) for startingZcoord in self.planeZcoords)
+        else:
+            startingpointslist = [getpoint(startingZcoord) for startingZcoord in self.planeZcoords]
+
+        self.initialpointsLists.append(startingpointslist)
 
 
 
