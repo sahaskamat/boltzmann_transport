@@ -36,12 +36,12 @@ class InterpolatedCurves:
 
     def __init__(self,npoints,dispersion,doublefermisurface,B_parr=None,B=None):
         if B!=None:
-            self.theta = np.arctan(B[1]/B[0]) #theta = arctan(By/Bx)
+            self.theta = np.arctan(np.float64(B[1])/np.float64(B[0])) #theta = arctan(By/Bx) numpy.float64 is used to ensure division by zero returns Inf and not an error
         elif B_parr!=None:
-            self.theta = np.arctan(B_parr[1]/B_parr[0]) #theta = arctan(By/Bx)
+            self.theta = np.arctan(np.float64(B_parr[1])/np.float64(B_parr[0])) #theta = arctan(By/Bx) numpy.float64 is used to ensure division by zero returns Inf and not an error
         else:
             raise Exception("Both B and B_parr are unspecified: cannot create interpolatedCurves")
-
+        
         self.dispersion = dispersion
 
         if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
@@ -73,7 +73,7 @@ class InterpolatedCurves:
             """
             solve for point lying on FS for a given z coordinate (sign is inherited from the method variable signfactor) 
             """
-            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0] #figure out why the [0] is here
+            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0] 
             return np.array([r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord])
         
         #create startingpoints by iterating getpoints() over self.planeZcoords
