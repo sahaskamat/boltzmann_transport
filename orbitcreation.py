@@ -47,11 +47,12 @@ class InterpolatedCurves:
         if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
             raise Exception("Argument doublefermisurface is not a boolean")
 
-        c = self.dispersion.c/(1+int(doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+        self.doublefermisurface = doublefermisurface
+        c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
 
-        self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found
+        self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1,endpoint=False) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
 
-        self.initialpointsLists = [] #list of list of initialpoints. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
+        self.initialcurvesList = [] #list of list of initialpoints. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
 
     def solveforpoints(self,sign,parallelised=False):
         """
@@ -81,9 +82,26 @@ class InterpolatedCurves:
         else:
             startingpointslist = [getpoint(startingZcoord) for startingZcoord in self.planeZcoords]
 
-        self.initialpointsLists.append(startingpointslist)
+        self.initialcurvesList.append(np.array(startingpointslist))
 
+    def extendedZoneMultiply(self,nzones=1):
+        """
+        Extends initialcurvesList to 2*nzones zones lying along the kz direction. nzones in positive kz, nzones in negative kz.
+        """
+        self.extendedcurvesList = []
 
+        c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+
+        for curve in self.initialcurvesList:
+
+            extendedcurve = curve
+
+            for zonenumber in range(1,nzones+1): #iterates from 1 to nzones
+                previouszoneCurve = curve + [0,0,-(2*np.pi*zonenumber)/c] #create initial curve in the BZ below extendedcurve
+                nextzoneCurve = curve + [0,0,+(2*np.pi*zonenumber)/c]   #create initial curve in the BZ above extendedcurve
+                extendedcurve = np.concatenate((previouszoneCurve,extendedcurve,nextzoneCurve),axis=0) #concatenate all three curves to extend extendedcurve by one BZ on each side
+
+            self.extendedcurvesList.append(extendedcurve)
 
 
 class InitialPoints:
