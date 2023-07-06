@@ -103,6 +103,21 @@ class InterpolatedCurves:
 
             self.extendedcurvesList.append(extendedcurve)
 
+    def findintersections(self,normalvector,pointonplane):
+        """
+        Find intersections between self.extendedcurveslist and the plane defined by normalvector and pointonplane
+        """
+        def planeequation(kvector):
+            """
+            planeequation(kvector) = 0 is the equation of the plane defined by normalvector and pointonplane
+            """
+            return np.dot(kvector,normalvector) - np.dot(pointonplane,normalvector)
+        
+        intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
+
+        intersectionpoints = [curve[id] for (curve_id,curve) in enumerate(self.extendedcurvesList) for id in intersectionindices[curve_id][0] ] #extracts intersection coordinates from intersection indices
+
+        return np.array(intersectionpoints)
 
 class InitialPoints:
     """
