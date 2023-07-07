@@ -6,19 +6,25 @@ import conductivity
 from makesigmalist import makelist_parallel
 from time import time
 
-startime = time()
-
+starttime_global = time()
 thetalist = np.linspace(0,80,20)
+
+dispersionInstance = dispersion.LSCOdispersion()
+initialpointsInstance = orbitcreation.InterpolatedCurves(500,dispersionInstance,True,B_parr=[1,0])
+starttime = time()
+initialpointsInstance.solveforpoints("positive",parallelised=False)
+initialpointsInstance.solveforpoints("negative",parallelised=False)
+initialpointsInstance.extendedZoneMultiply(5)
+initialpointsInstance.createPlaneAnchors(20)
+endtime = time()
+print(f"Time taken to create initialcurves = {endtime - starttime}")
 
 def getsigma(theta):
     B = [0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))]
 
-    dispersionInstance = dispersion.LSCOdispersion()
-    initialpointsInstance = orbitcreation.InitialPoints(40,dispersionInstance,True,B)
-
-    orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,0.1,mult_factor=0.5)
-    orbitsinstance.createOrbitsEQS(0.0501)
+    orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
+    orbitsinstance.createOrbits(B)
+    orbitsinstance.createOrbitsEQS()
     #print(f'orbitcreation completed for {theta} degrees')
     #if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -33,8 +39,8 @@ sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 
 rhoxylist= [rho[2,2] for rho in rholist]
 
-endtime = time()
-print(f"execution time: {endtime-startime}")
+endtime_global = time()
+print(f"execution time: {endtime_global-starttime_global}")
 
 plt.scatter(thetalist,rhoxylist)
 plt.ylabel(r"$\rho$ ($10^{-9} m\Omega$ cm )")
