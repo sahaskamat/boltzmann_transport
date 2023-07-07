@@ -32,6 +32,8 @@ class InterpolatedCurves:
     doublefermisurface (bool, True if unit cell size is c/2)
     B_parr (list containing two floats, representing the in plane direction of B)
     B (if B_parr is not supplied, in plane direction of B will be inferred)
+
+    This class replaces the older InitialPoints class, and is compatible with the Conductivity class out of the box
     """
 
     def __init__(self,npoints,dispersion,doublefermisurface,B_parr=None,B=None):
@@ -126,6 +128,20 @@ class InterpolatedCurves:
 
         return np.array(intersectionpoints)
 
+    def createPlaneAnchors(self,n):
+        """
+        Inputs:
+        n (this denotes the number of plane anchors to create, each will lie along the z-axis. corresponds to the number of planes used to create orbits later)
+        """
+
+        c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+
+        planeAnchors_zcoords = np.linspace(-(np.pi)/c,(np.pi)/c,n+1,endpoint=False) #create zcoordinates, each defining a plane on which orbits will be created
+        self.planeAnchors = [np.array([0,0,z]) for z in planeAnchors_zcoords] #make points out of zcoordinates, to be passed to createorbitsinplane()
+
+        self.dkz = self.planeAnchors[1] - self.planeAnchors[0] #this creates a vector that takes you from one plane to another
+
+
 class NewOrbits:
     """
     Inputs:
@@ -144,7 +160,7 @@ class NewOrbits:
             self.interpolatedcurves.extendedZoneMultiply()
 
 
-    def createOrbitsInPlane(self,B,pointonplane,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+    def createOrbitsInPlane(self,B,pointonplane,termination_resolution = 0.02,sampletimes = np.linspace(0,400,100000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -155,9 +171,7 @@ class NewOrbits:
 
         Creates all possible orbits lying in the plane defined by B and pointonplane
         """
-        self.B = np.array(B)
         B_normalized = np.array(B)/np.linalg.norm(B)
-        self.termination_resolution = termination_resolution
 
         initialpointslist = self.interpolatedcurves.findintersections(B,pointonplane)
 
@@ -178,7 +192,7 @@ class NewOrbits:
             event_fun.terminal = True # make event function terminal -- this is the terminating event
             event_fun.direction = -1 #event function only triggered when it is decreasing
 
-            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-4,atol=1e-5)
+            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = None, dense_output=True, events=event_fun,method='LSODA',rtol=1e-7,atol=1e-8)
             orbit = np.transpose(solution.y)
 
             #now check if any other elements of initialpointslist appear in orbit
@@ -192,9 +206,64 @@ class NewOrbits:
             initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
 
             orbitsinplane.append(orbit)
-            print("Orbit created and appended")
 
+        print("Number of orbits created in plane:",len(orbitsinplane))
         return orbitsinplane
+    
+    def createOrbits(self,B,termination_resolution = 0.02,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+        """
+        Inputs:
+        B (3-vector specifying direction of magnetic field)
+        termination_resolution (radius in which integration terminates, default value 0.05)
+        sampletimes (times at which to sample solution)
+        mult_factor (multiplication factor for B during integration: larger means faster integration, but greater than 10 and integration breaks ihavenoideawhy)
+
+        Creates all possible orbits lying on planes defined by B and self.interpolatedcurves.planeAnchors
+        """
+        self.orbits = []
+        self.termination_resolution = termination_resolution
+
+        for point in self.interpolatedcurves.planeAnchors: #creates orbits for each planeanchor and then appends it to self.orbits
+            listoforbitsinplane = self.createOrbitsInPlane(B,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
+            for orbit in listoforbitsinplane: self.orbits.append(orbit)
+
+        self.B = B
+
+    def createOrbitsEQS(self,integration_resolution=0.02):
+        """
+        Inputs:
+        integration_resolution (spacing between points, this becomes the resolution for integration when used in conjunction with a Conductivity object)
+
+        Creates:
+        List of equally spaced orbits orbitsEQS
+        """
+        self.orbitsEQS = []
+
+        def appendSingleOrbitEQS(orbit):
+            """
+            This function creates an equally spaced orbit out of the input orbit, and appends it to self.orbitsEQS if it has mroe than three points
+            """
+            #add initial point to equally spaced orbit
+            startingpoint = orbit[0]
+            currentpoint  = startingpoint
+            singleorbitEQS = np.array([currentpoint],ndmin=2)
+
+            #keep iterating over points in the orbit
+            for id,point in enumerate(orbit):
+                #if this point is sufficiently far away from previous point, add point to list
+                if np.linalg.norm(currentpoint - point) > integration_resolution:
+                    currentpoint = point
+                    singleorbitEQS = np.append(singleorbitEQS,np.array([currentpoint],ndmin=2),axis=0)
+                    print("point appended")
+
+            #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
+            if not singleorbitEQS.shape[0] < 3:
+                self.orbitsEQS.append(singleorbitEQS)
+
+        for orbit in self.orbits: appendSingleOrbitEQS(orbit)
+
+
+
 
 class InitialPoints:
     """
@@ -316,22 +385,22 @@ class Orbits:
             #add initial point to equally spaced orbit
             startingpoint = curve[0]
             currentpoint  = startingpoint
-            orbit1EQS = np.array([currentpoint],ndmin=2)
+            orbitEQS = np.array([currentpoint],ndmin=2)
 
             #keep iterating over points in the orbit
             for point in curve:
                 #if this point is sufficiently far away from previous point, add point to list
                 if np.linalg.norm(currentpoint - point) > resolution:
                     currentpoint = point
-                    orbit1EQS = np.append(orbit1EQS,np.array([currentpoint],ndmin=2),axis=0)
+                    orbitEQS = np.append(orbitEQS,np.array([currentpoint],ndmin=2),axis=0)
 
                     #this condition breaks the loop when you return to the starting point
                     if np.linalg.norm(currentpoint -startingpoint) < resolution:
                         break
 
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
-            if not orbit1EQS.shape[0] < 3:
-                self.orbitsEQS.append(orbit1EQS)
+            if not orbitEQS.shape[0] < 3:
+                self.orbitsEQS.append(orbitEQS)
 
         #check if both orbits are the same, and append only distinct orbits to orbitsEQS:
         tolerance =checkingtolerance
