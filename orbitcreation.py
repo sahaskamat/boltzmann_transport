@@ -60,6 +60,8 @@ class InterpolatedCurves:
         Inputs:
         sign (decides the sign of theta along which to search for solutions. For a complete set, use both "positive" and "negative")
         parallelised (bool, True if solving for points is to be parallelised across cores)
+        Creates:
+        initialcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
         """
 
         if sign == "positive":
@@ -87,10 +89,14 @@ class InterpolatedCurves:
     def extendedZoneMultiply(self,nzones=1):
         """
         Extends initialcurvesList to 2*nzones zones lying along the kz direction. nzones in positive kz, nzones in negative kz.
+        Creates:
+        extendedcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
         """
         self.extendedcurvesList = []
 
         c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+        
+        if not hasattr(self,'initialcurvesList'): raise Exception("initialcurvesList has not been created. Call solveforpoints() first.")
 
         for curve in self.initialcurvesList:
 
@@ -106,6 +112,7 @@ class InterpolatedCurves:
     def findintersections(self,normalvector,pointonplane):
         """
         Find intersections between self.extendedcurveslist and the plane defined by normalvector and pointonplane
+        Returns an array of intersection points
         """
         def planeequation(kvector):
             """
@@ -118,6 +125,76 @@ class InterpolatedCurves:
         intersectionpoints = [curve[id] for (curve_id,curve) in enumerate(self.extendedcurvesList) for id in intersectionindices[curve_id][0] ] #extracts intersection coordinates from intersection indices
 
         return np.array(intersectionpoints)
+
+class NewOrbits:
+    """
+    Inputs:
+    dispersion (object of type dispersion)
+    interpolatedcurves (onject of type interpolatedcurves)
+    
+    """
+    def __init__(self,dispersion,interpolatedcurves):
+        self.dispersion = dispersion
+        self.interpolatedcurves = interpolatedcurves
+
+        try: 
+            self.interpolatedcurves.extendedcurvesList #since many methods for this class are defined using extendedcurvesList, this makes sure it exists
+        except NameError:
+            print("initialcurvesList not extended for interpolatedcurves, extending with nzones =1")
+            self.interpolatedcurves.extendedZoneMultiply()
+
+
+    def createOrbitsInPlane(self,B,pointonplane,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+        """
+        Inputs:
+        B (3-vector specifying direction of magnetic field)
+        pointonplane (a point lying in the plane of orbit to be created. Does not have to lie on the orbit itself.)
+        termination_resolution (radius in which integration terminates, default value 0.05)
+        sampletimes (times at which to sample solution)
+        mult_factor (multiplication factor for B during integration: larger means faster integration, but greater than 10 and integration breaks ihavenoideawhy)
+
+        Creates all possible orbits lying in the plane defined by B and pointonplane
+        """
+        self.B = np.array(B)
+        B_normalized = np.array(B)/np.linalg.norm(B)
+        self.termination_resolution = termination_resolution
+
+        initialpointslist = self.interpolatedcurves.findintersections(B,pointonplane)
+
+        #the force v \cross B term but now with fixed B
+        RHS_withB = lambda t,k : self.dispersion.RHS_numeric(k,mult_factor*B_normalized)
+
+        #timestamps on which to start and end integration (in principle, the endpoint will not be required)
+        t_span = (sampletimes[0],sampletimes[-1])
+
+        #list of orbits in plane
+        orbitsinplane = []
+
+        while initialpointslist.size > 0:
+            initial = initialpointslist[0]
+
+            # solve differential equation to find a single orbit
+            event_fun = lambda t,k : np.linalg.norm(np.array(k)-np.array(initial)) - termination_resolution # define event function
+            event_fun.terminal = True # make event function terminal -- this is the terminating event
+            event_fun.direction = -1 #event function only triggered when it is decreasing
+
+            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-4,atol=1e-5)
+            orbit = np.transpose(solution.y)
+
+            #now check if any other elements of initialpointslist appear in orbit
+            elementstobedeleted= []
+
+            for orbitpoint in orbit:
+                for id,initialpoint in enumerate(initialpointslist):
+                    if np.linalg.norm(orbitpoint-initialpoint) < termination_resolution: #this means that initialpoint lies on orbit
+                        elementstobedeleted.append(id) #add index of initialpoint to the array of positions to be deleted
+
+            initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
+
+            orbitsinplane.append(orbit)
+            print("Orbit created and appended")
+
+        return orbitsinplane
 
 class InitialPoints:
     """
