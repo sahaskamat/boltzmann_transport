@@ -7,20 +7,22 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,80,20)
+thetalist = np.linspace(0,80,40)
+phi = 0
 
+phi_rad = np.deg2rad(phi)
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(500,dispersionInstance,True,B_parr=[1,0])
+initialpointsInstance = orbitcreation.InterpolatedCurves(500,dispersionInstance,True,B_parr=[1*np.cos(phi_rad),1*np.sin(phi_rad)])
 starttime = time()
 initialpointsInstance.solveforpoints("positive",parallelised=False)
 initialpointsInstance.solveforpoints("negative",parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(20)
+initialpointsInstance.createPlaneAnchors(80)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
 def getsigma(theta):
-    B = [0,45*np.sin(np.deg2rad(theta)),45*np.cos(np.deg2rad(theta))]
+    B = [45*np.sin(np.deg2rad(theta))*np.cos(phi_rad),45*np.sin(np.deg2rad(theta))*np.sin(phi_rad),45*np.cos(np.deg2rad(theta))]
 
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B)
@@ -31,6 +33,8 @@ def getsigma(theta):
     conductivityInstance.createAMatrix()
     conductivityInstance.createAlpha()
     conductivityInstance.createSigma()
+
+    #orbitsinstance.orbitdiagnosticplot()
     #print(f'matrixinversion performed for {theta}')
     print(f"Calculated total area: {conductivityInstance.areasum}, number of orbits used {len(conductivityInstance.orbitsInstance.orbitsEQS)}")
     return conductivityInstance.sigma,conductivityInstance.areasum

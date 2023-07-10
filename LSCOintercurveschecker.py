@@ -17,18 +17,18 @@ endtime = time()
 
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
-ax = plt.figure().add_subplot(projection='3d')
+#ax = plt.figure().add_subplot(projection='3d')
 
 #plotting extendedcurveslist
-for curve in initialpointsInstance.extendedcurvesList:
-    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
+#for curve in initialpointsInstance.extendedcurvesList:
+#    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
 theta = np.deg2rad(60)
 B = [1*np.sin(theta),0,1*np.cos(theta)]
 intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
 #plottingintersections
-ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
+#ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
 
 starttime = time()
 orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
@@ -46,5 +46,7 @@ conductivityInstance.createSigma()
 endtime = time()
 print(f"Time taken to calculate conductivity = {endtime - starttime}")
 
-for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
-plt.show()
+orbitsinstance.orbitdiagnosticplot()
+
+#for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
+#plt.show()

@@ -192,7 +192,7 @@ class NewOrbits:
             event_fun.terminal = True # make event function terminal -- this is the terminating event
             event_fun.direction = -1 #event function only triggered when it is decreasing
 
-            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = None, dense_output=True, events=event_fun,method='LSODA',rtol=1e-7,atol=1e-8)
+            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-7,atol=1e-8)
             orbit = np.transpose(solution.y)
 
             #now check if any other elements of initialpointslist appear in orbit
@@ -210,7 +210,7 @@ class NewOrbits:
         print("Number of orbits created in plane:",len(orbitsinplane))
         return orbitsinplane
     
-    def createOrbits(self,B,termination_resolution = 0.02,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -229,7 +229,7 @@ class NewOrbits:
 
         self.B = B
 
-    def createOrbitsEQS(self,integration_resolution=0.02):
+    def createOrbitsEQS(self,integration_resolution=0.05):
         """
         Inputs:
         integration_resolution (spacing between points, this becomes the resolution for integration when used in conjunction with a Conductivity object)
@@ -254,7 +254,6 @@ class NewOrbits:
                 if np.linalg.norm(currentpoint - point) > integration_resolution:
                     currentpoint = point
                     singleorbitEQS = np.append(singleorbitEQS,np.array([currentpoint],ndmin=2),axis=0)
-                    print("point appended")
 
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
             if not singleorbitEQS.shape[0] < 3:
@@ -262,7 +261,15 @@ class NewOrbits:
 
         for orbit in self.orbits: appendSingleOrbitEQS(orbit)
 
+    def orbitdiagnosticplot(self):
+        ax = plt.figure().add_subplot(projection='3d')
 
+        for curve in self.interpolatedcurves.extendedcurvesList:
+            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
+
+        for orbit in self.orbitsEQS: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
+
+        plt.show()
 
 
 class InitialPoints:
