@@ -17,7 +17,7 @@ starttime = time()
 initialpointsInstance.solveforpoints("positive",parallelised=False)
 initialpointsInstance.solveforpoints("negative",parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(160)
+initialpointsInstance.createPlaneAnchors(30)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -25,8 +25,8 @@ def getsigma(theta):
     B = [45*np.sin(np.deg2rad(theta))*np.cos(phi_rad),45*np.sin(np.deg2rad(theta))*np.sin(phi_rad),45*np.cos(np.deg2rad(theta))]
 
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.05)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
+    orbitsinstance.createOrbits(B,termination_resolution=0.03)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.03)
     #print(f'orbitcreation completed for {theta} degrees')
     #if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -52,6 +52,6 @@ plt.xlabel(r'$\theta$')
 plt.show()
 
 plt.scatter(thetalist,arealist)
-plt.ylabel(r"$\rho$ ($10^{-9} m\Omega$ cm )")
+plt.ylabel(r"$Area (\AA)$ cm )")
 plt.xlabel(r'$\theta$')
 plt.show()
