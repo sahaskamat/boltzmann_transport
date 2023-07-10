@@ -43,7 +43,7 @@ class InterpolatedCurves:
             self.theta = np.arctan(np.float64(B_parr[1])/np.float64(B_parr[0])) #theta = arctan(By/Bx) numpy.float64 is used to ensure division by zero returns Inf and not an error
         else:
             raise Exception("Both B and B_parr are unspecified: cannot create interpolatedCurves")
-        
+
         self.dispersion = dispersion
 
         if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
@@ -75,11 +75,11 @@ class InterpolatedCurves:
 
         def getpoint(startingZcoord):
             """
-            solve for point lying on FS for a given z coordinate (sign is inherited from the method variable signfactor) 
+            solve for point lying on FS for a given z coordinate (sign is inherited from the method variable signfactor)
             """
-            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0] 
+            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0]
             return np.array([r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord])
-        
+
         #create startingpoints by iterating getpoints() over self.planeZcoords
         if parallelised:
             startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord) for startingZcoord in self.planeZcoords)
@@ -97,7 +97,7 @@ class InterpolatedCurves:
         self.extendedcurvesList = []
 
         c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
-        
+
         if not hasattr(self,'initialcurvesList'): raise Exception("initialcurvesList has not been created. Call solveforpoints() first.")
 
         for curve in self.initialcurvesList:
@@ -121,7 +121,7 @@ class InterpolatedCurves:
             planeequation(kvector) = 0 is the equation of the plane defined by normalvector and pointonplane
             """
             return np.dot(kvector,normalvector) - np.dot(pointonplane,normalvector)
-        
+
         intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
 
         intersectionpoints = [curve[id] for (curve_id,curve) in enumerate(self.extendedcurvesList) for id in intersectionindices[curve_id][0] ] #extracts intersection coordinates from intersection indices
@@ -147,13 +147,13 @@ class NewOrbits:
     Inputs:
     dispersion (object of type dispersion)
     interpolatedcurves (onject of type interpolatedcurves)
-    
+
     """
     def __init__(self,dispersion,interpolatedcurves):
         self.dispersion = dispersion
         self.interpolatedcurves = interpolatedcurves
 
-        try: 
+        try:
             self.interpolatedcurves.extendedcurvesList #since many methods for this class are defined using extendedcurvesList, this makes sure it exists
         except NameError:
             print("initialcurvesList not extended for interpolatedcurves, extending with nzones =1")
@@ -207,9 +207,9 @@ class NewOrbits:
 
             orbitsinplane.append(orbit)
 
-        print("Number of orbits created in plane:",len(orbitsinplane))
+        #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
-    
+
     def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
         """
         Inputs:
