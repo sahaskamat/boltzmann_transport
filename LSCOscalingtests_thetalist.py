@@ -12,10 +12,9 @@ phi = 0
 
 phi_rad = np.deg2rad(phi)
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(5000,dispersionInstance,True,B_parr=[1*np.cos(phi_rad),1*np.sin(phi_rad)])
+initialpointsInstance = orbitcreation.InterpolatedCurves(5000,dispersionInstance,True)
 starttime = time()
-initialpointsInstance.solveforpoints("positive",parallelised=False)
-initialpointsInstance.solveforpoints("negative",parallelised=False)
+initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
 initialpointsInstance.createPlaneAnchors(30)
 endtime = time()

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.optimize import fsolve
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
 
@@ -36,14 +37,7 @@ class InterpolatedCurves:
     This class replaces the older InitialPoints class, and is compatible with the Conductivity class out of the box
     """
 
-    def __init__(self,npoints,dispersion,doublefermisurface,B_parr=None,B=None):
-        if B!=None:
-            self.theta = np.arctan(np.float64(B[1])/np.float64(B[0])) #theta = arctan(By/Bx) numpy.float64 is used to ensure division by zero returns Inf and not an error
-        elif B_parr!=None:
-            self.theta = np.arctan(np.float64(B_parr[1])/np.float64(B_parr[0])) #theta = arctan(By/Bx) numpy.float64 is used to ensure division by zero returns Inf and not an error
-        else:
-            raise Exception("Both B and B_parr are unspecified: cannot create interpolatedCurves")
-
+    def __init__(self,npoints,dispersion,doublefermisurface):
         self.dispersion = dispersion
 
         if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
@@ -55,46 +49,48 @@ class InterpolatedCurves:
         self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1,endpoint=False) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
 
         self.initialcurvesList = [] #list of list of initialpoints. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
+        self.interpolatedcurveslist = [] #list of interpolated functions that output [x,y] coordinates along a set of points when given a z-coordinate
 
-    def solveforpoints(self,sign,parallelised=False):
+    def solveforpoints(self,parallelised=False):
         """
-        Solves for points on each side of the fermi surface
+        Solves for points on four sides of the fermi surface
         Inputs:
-        sign (decides the sign of theta along which to search for solutions. For a complete set, use both "positive" and "negative")
         parallelised (bool, True if solving for points is to be parallelised across cores)
         Creates:
         initialcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
         """
 
-        if sign == "positive":
-            signfactor = 1
-        elif sign == "negative":
-            signfactor = -1
-        else:
-            raise Exception("Sign should be a string with value 'positive' or 'negative'")
+        philist = [np.deg2rad(90*i) for i in range(4)] #list of phis along which to find curves lying on the fermi surface
 
-        def getpoint(startingZcoord):
+        def getpoint(startingZcoord,phi):
             """
-            solve for point lying on FS for a given z coordinate (sign is inherited from the method variable signfactor)
+            solve for point lying on FS for a given z coordinate and phi
             """
-            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord),0.5*signfactor,factor=0.1,maxfev=500000)[0]
-            return np.array([r0*np.cos(self.theta),r0*np.sin(self.theta),startingZcoord])
+            r0 = fsolve(lambda r0 : self.dispersion.en_numeric(r0*np.cos(phi),r0*np.sin(phi),startingZcoord),0.5,factor=0.1,maxfev=500000)[0]
+            return np.array([r0*np.cos(phi),r0*np.sin(phi),startingZcoord])
 
         #create startingpoints by iterating getpoints() over self.planeZcoords
-        if parallelised:
-            startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord) for startingZcoord in self.planeZcoords)
-        else:
-            startingpointslist = [getpoint(startingZcoord) for startingZcoord in self.planeZcoords]
+        for phi in philist:
+            if parallelised:
+                startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord,phi) for startingZcoord in self.planeZcoords)
+            else:
+                startingpointslist = [getpoint(startingZcoord,phi) for startingZcoord in self.planeZcoords]
 
-        self.initialcurvesList.append(np.array(startingpointslist))
+            startingpointsarray = np.array(startingpointslist)
+
+            self.initialcurvesList.append(startingpointsarray)
+            self.interpolatedcurveslist.append(interp1d(np.transpose(startingpointsarray[:,2]),np.transpose(startingpointsarray[:,0:2])))
+
 
     def extendedZoneMultiply(self,nzones=1):
         """
         Extends initialcurvesList to 2*nzones zones lying along the kz direction. nzones in positive kz, nzones in negative kz.
         Creates:
         extendedcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
+        extendedinterpolatedlist(a list containing functions that output x and y coordinates that lie on the FS, now compatible with any brilloin zone)
         """
         self.extendedcurvesList = []
+        self.extendedinterpolatedlist = [lambda kz: function(kz%((2*np.pi)/c) - ((np.pi)/c)) for function in self.interpolatedcurveslist]
 
         c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
 
@@ -111,6 +107,7 @@ class InterpolatedCurves:
 
             self.extendedcurvesList.append(extendedcurve)
 
+
     def findintersections(self,normalvector,pointonplane):
         """
         Find intersections between self.extendedcurveslist and the plane defined by normalvector and pointonplane
@@ -122,9 +119,42 @@ class InterpolatedCurves:
             """
             return np.dot(kvector,normalvector) - np.dot(pointonplane,normalvector)
 
-        intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
+        def binaryfindintersection(upperbound,lowerbound,planeequation,interpolatedcurve):
+            """
+            Inputs:
+            upperbound (3-vector denoting one end of curve in which planeequation=0 has to be found)
+            lowerbound (3-vector denoting the other end of curve in which planeequation=0 has to be found)
+            planeequation (function of [x,y,z] whose roots have to be found)
+            interpolatedcurve (function [x(z),y(z)] that parameterizes a curve between upperbound and lowerbound, along which a root will be found)
+            """
+            upperz = upperbound[2]
+            lowerz = lowerbound[2]
 
-        intersectionpoints = [curve[id] for (curve_id,curve) in enumerate(self.extendedcurvesList) for id in intersectionindices[curve_id][0] ] #extracts intersection coordinates from intersection indices
+            for i in range(10):
+                midz = (upperz+lowerz)/2
+
+                upperpoint = [interpolatedcurve(upperz)[0],interpolatedcurve(upperz)[1],upperz]
+                lowerpoint = [interpolatedcurve(lowerz)[0],interpolatedcurve(lowerz)[1],lowerz]
+                midpoint = [interpolatedcurve(midz)[0],interpolatedcurve(midz)[1],midz]
+
+                if planeequation(upperpoint)*planeequation(midpoint)<0: #intersection is between upperpoint and midpoint
+                    lowerz = midz
+                elif planeequation(lowerpoint)*planeequation(midpoint)<0: #intersection is between lowerpoint and midpoint
+                    upperz = midz
+                else:
+                    raise Exception(("Intersection not found between upperbound and lowerbound"))
+
+            midpoint = [interpolatedcurve(midz)[0],interpolatedcurve(midz)[1],midz]
+            return midpoint
+
+        intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
+        intersectionpoints = []
+
+        for (curve_id,curve) in enumerate(self.extendedcurvesList):
+            for id in intersectionindices[curve_id][0]:
+                lowerbound = curve[id]
+                upperbound = curve[id+1]
+                intersectionpoints.append(binaryfindintersection(upperbound, lowerbound, planeequation, self.extendedinterpolatedlist[curve_id]))
 
         return np.array(intersectionpoints)
 

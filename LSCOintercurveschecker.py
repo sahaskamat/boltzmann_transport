@@ -6,11 +6,10 @@ import matplotlib.pyplot as plt
 from time import time
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(500,dispersionInstance,True,B_parr=[1,0])
+initialpointsInstance = orbitcreation.InterpolatedCurves(50,dispersionInstance,True)
 
 starttime = time()
-initialpointsInstance.solveforpoints("positive",parallelised=False)
-initialpointsInstance.solveforpoints("negative",parallelised=False)
+initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
 initialpointsInstance.createPlaneAnchors(20)
 endtime = time()
@@ -23,8 +22,9 @@ print(f"Time taken to create initialcurves = {endtime - starttime}")
 #for curve in initialpointsInstance.extendedcurvesList:
 #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-theta = np.deg2rad(60)
-B = [1*np.sin(theta),0,1*np.cos(theta)]
+theta = np.deg2rad(80)
+phi = np.deg2rad(0)
+B = [1*np.sin(theta)*np.cos(phi),1*np.sin(theta)*np.sin(phi),1*np.cos(theta)]
 intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
 #plottingintersections
