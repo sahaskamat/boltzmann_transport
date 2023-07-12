@@ -60,7 +60,8 @@ class InterpolatedCurves:
         initialcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
         """
 
-        philist = [np.deg2rad(90*i) for i in range(4)] #list of phis along which to find curves lying on the fermi surface
+        angularwidth = np.pi/10 #angular width around van hole points to solve for points
+        philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
 
         def getpoint(startingZcoord,phi):
             """
@@ -206,7 +207,7 @@ class NewOrbits:
             self.interpolatedcurves.extendedZoneMultiply()
 
 
-    def createOrbitsInPlane(self,B,pointonplane,termination_resolution = 0.02,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+    def createOrbitsInPlane(self,B,pointonplane,termination_resolution,sampletimes,mult_factor):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)

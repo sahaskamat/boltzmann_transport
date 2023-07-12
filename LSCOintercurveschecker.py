@@ -25,7 +25,7 @@ print(f"Time taken to create initialcurves = {endtime - starttime}")
 #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
 theta = np.deg2rad(80)
-phi = np.deg2rad(0)
+phi = np.deg2rad(15)
 B = [1*np.sin(theta)*np.cos(phi),1*np.sin(theta)*np.sin(phi),1*np.cos(theta)]
 intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
@@ -38,7 +38,7 @@ orbitsinstance.createOrbits(B)
 orbitsinstance.createOrbitsEQS()
 listoforbits = orbitsinstance.orbitsEQS
 endtime = time()
-print(f"Time taken to create orbits = {endtime - starttime}")
+print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}")
 
 starttime = time()
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
