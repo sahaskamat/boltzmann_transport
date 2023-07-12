@@ -12,9 +12,11 @@ starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
 initialpointsInstance.createPlaneAnchors(20)
+#initialpointsInstance.plotpoints()
 endtime = time()
 
 print(f"Time taken to create initialcurves = {endtime - starttime}")
+
 
 #ax = plt.figure().add_subplot(projection='3d')
 
@@ -50,3 +52,4 @@ orbitsinstance.orbitdiagnosticplot()
 
 #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
 #plt.show()
+

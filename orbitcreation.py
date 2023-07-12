@@ -44,9 +44,9 @@ class InterpolatedCurves:
             raise Exception("Argument doublefermisurface is not a boolean")
 
         self.doublefermisurface = doublefermisurface
-        c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
+        self.c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
 
-        self.planeZcoords = np.linspace(-(np.pi)/c,(np.pi)/c,npoints+1,endpoint=False) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
+        self.planeZcoords = np.linspace(-(np.pi)/self.c,(np.pi)/self.c,npoints+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
 
         self.initialcurvesList = [] #list of list of initialpoints. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
         self.interpolatedcurveslist = [] #list of interpolated functions that output [x,y] coordinates along a set of points when given a z-coordinate
@@ -78,19 +78,32 @@ class InterpolatedCurves:
 
             startingpointsarray = np.array(startingpointslist)
 
-            self.initialcurvesList.append(startingpointsarray)
+            self.initialcurvesList.append(np.delete(startingpointsarray,-1,axis=0))
+
             self.interpolatedcurveslist.append(interp1d(np.transpose(startingpointsarray[:,2]),np.transpose(startingpointsarray[:,0:2])))
 
+    def plotpoints(self):
+        ax = plt.figure().add_subplot(projection='3d')
+
+        #plotting extendedcurveslist
+        for curve in self.initialcurvesList:
+            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=10)
+
+        #plotting interpolatedcurves
+        interpolatedcurveslist = np.array([[[interpolatingfunction(kz)[0],interpolatingfunction(kz)[1],kz] for kz in np.linspace((-np.pi)/self.c,(np.pi)/self.c,1000)] for interpolatingfunction in self.interpolatedcurveslist])
+
+        for curve in interpolatedcurveslist:
+            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
+
+        plt.show()
 
     def extendedZoneMultiply(self,nzones=1):
         """
         Extends initialcurvesList to 2*nzones zones lying along the kz direction. nzones in positive kz, nzones in negative kz.
         Creates:
         extendedcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
-        extendedinterpolatedlist(a list containing functions that output x and y coordinates that lie on the FS, now compatible with any brilloin zone)
         """
         self.extendedcurvesList = []
-        self.extendedinterpolatedlist = [lambda kz: function(kz%((2*np.pi)/c) - ((np.pi)/c)) for function in self.interpolatedcurveslist]
 
         c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
 
@@ -125,26 +138,30 @@ class InterpolatedCurves:
             upperbound (3-vector denoting one end of curve in which planeequation=0 has to be found)
             lowerbound (3-vector denoting the other end of curve in which planeequation=0 has to be found)
             planeequation (function of [x,y,z] whose roots have to be found)
-            interpolatedcurve (function [x(z),y(z)] that parameterizes a curve between upperbound and lowerbound, along which a root will be found)
+            extendedinterpolatedcurve (function [x(z),y(z)] that parameterizes a curve between upperbound and lowerbound, along which a root will be found)
             """
+            def extendedinterpolatedcurve(kz):
+                return interpolatedcurve(((kz+np.pi/self.c)%(2*np.pi/self.c) - np.pi/self.c))
+
             upperz = upperbound[2]
             lowerz = lowerbound[2]
 
             for i in range(10):
                 midz = (upperz+lowerz)/2
 
-                upperpoint = [interpolatedcurve(upperz)[0],interpolatedcurve(upperz)[1],upperz]
-                lowerpoint = [interpolatedcurve(lowerz)[0],interpolatedcurve(lowerz)[1],lowerz]
-                midpoint = [interpolatedcurve(midz)[0],interpolatedcurve(midz)[1],midz]
+                upperpoint = [extendedinterpolatedcurve(upperz)[0],extendedinterpolatedcurve(upperz)[1],upperz]
+                lowerpoint = [extendedinterpolatedcurve(lowerz)[0],extendedinterpolatedcurve(lowerz)[1],lowerz]
+                midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
 
                 if planeequation(upperpoint)*planeequation(midpoint)<0: #intersection is between upperpoint and midpoint
                     lowerz = midz
                 elif planeequation(lowerpoint)*planeequation(midpoint)<0: #intersection is between lowerpoint and midpoint
                     upperz = midz
-                else:
-                    raise Exception(("Intersection not found between upperbound and lowerbound"))
+                #else:
+                #    raise Exception(("Intersection not found between upperbound and lowerbound"))
 
-            midpoint = [interpolatedcurve(midz)[0],interpolatedcurve(midz)[1],midz]
+            midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
+            print("Value at midpoint is",planeequation(midpoint))
             return midpoint
 
         intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
@@ -154,7 +171,8 @@ class InterpolatedCurves:
             for id in intersectionindices[curve_id][0]:
                 lowerbound = curve[id]
                 upperbound = curve[id+1]
-                intersectionpoints.append(binaryfindintersection(upperbound, lowerbound, planeequation, self.extendedinterpolatedlist[curve_id]))
+                print(f"value at curve[id]={planeequation(curve[id])},curve[id+1]={planeequation(curve[id+1])}")
+                intersectionpoints.append(binaryfindintersection(upperbound, lowerbound, planeequation, self.interpolatedcurveslist[curve_id]))
 
         return np.array(intersectionpoints)
 
