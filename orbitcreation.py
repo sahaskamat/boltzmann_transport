@@ -146,7 +146,7 @@ class InterpolatedCurves:
             upperz = upperbound[2]
             lowerz = lowerbound[2]
 
-            for i in range(10):
+            for i in range(20):
                 midz = (upperz+lowerz)/2
 
                 upperpoint = [extendedinterpolatedcurve(upperz)[0],extendedinterpolatedcurve(upperz)[1],upperz]
@@ -161,7 +161,6 @@ class InterpolatedCurves:
                 #    raise Exception(("Intersection not found between upperbound and lowerbound"))
 
             midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
-            print("Value at midpoint is",planeequation(midpoint))
             return midpoint
 
         intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
@@ -171,7 +170,6 @@ class InterpolatedCurves:
             for id in intersectionindices[curve_id][0]:
                 lowerbound = curve[id]
                 upperbound = curve[id+1]
-                print(f"value at curve[id]={planeequation(curve[id])},curve[id+1]={planeequation(curve[id+1])}")
                 intersectionpoints.append(binaryfindintersection(upperbound, lowerbound, planeequation, self.interpolatedcurveslist[curve_id]))
 
         return np.array(intersectionpoints)
