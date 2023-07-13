@@ -5,6 +5,18 @@ def deltap(p1,p2):
     #takes input p1 and p2 as lists and returns magnitude of their difference
     return np.linalg.norm(np.array(p1) - np.array(p2))
 
+def cross(a, b):
+    #manually defined cross product since np.cross is very slow
+    result = [a[1]*b[2] - a[2]*b[1],
+            a[2]*b[0] - a[0]*b[2],
+            a[0]*b[1] - a[1]*b[0]]
+
+    return result
+
+def dot(a,b):
+    #manually defined dot product since numpy is very slow
+    result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+    return result
 
 class FreeElectronDispersion:
     """
@@ -144,10 +156,10 @@ class LSCOdispersion:
         #takes input p as a list of [px,py,pz] and returns of de/dk at that p
         return np.array(self.graden_numeric(p[0],p[1],p[2]))
 
-    def dkperp(self,p,B,dkz):
+    def dkperp(self,B,dkz,dedk):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
-        nvec = np.cross(self.dedk(p),np.cross(self.dedk(p),B)) #nvec = dedk x (dedk x B)
-        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B))
-        dkperp = scalar_term*nvec
+        nvec = cross(dedk,cross(dedk,B)) #nvec = dedk x (dedk x B)
+        scalar_term = (dot(dkz,B))/(dot(nvec,B))
+        dkperp = [scalar_term*nvec[i] for i in range(3)]
         return dkperp

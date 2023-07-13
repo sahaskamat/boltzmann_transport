@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy.optimize import fsolve
 import numpy as np
@@ -5,8 +6,6 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
-
-
 
 ########################
 # Module to find number of CPUS
@@ -60,8 +59,9 @@ class InterpolatedCurves:
         initialcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
         """
 
-        angularwidth = np.pi/10 #angular width around van hole points to solve for points
-        philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
+        #angularwidth = np.pi/10 #angular width around van hole points to solve for points
+        #philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
+        philist = [0,np.pi]
 
         def getpoint(startingZcoord,phi):
             """

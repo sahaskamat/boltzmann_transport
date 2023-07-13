@@ -1,3 +1,4 @@
+
 import dispersion
 import orbitcreation
 import conductivity
@@ -42,9 +43,21 @@ print(f"Time taken to create orbits = {endtime - starttime}, number of orbits cr
 
 starttime = time()
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
+endtime = time()
+print(f"Time taken to create conductivityInstance =  {endtime - starttime}")
+
+starttime = time()
 conductivityInstance.createAMatrix()
 print(conductivityInstance.A.shape)
+endtime = time()
+print(f"Time taken to create Amatrix =  {endtime - starttime}")
+
+starttime = time()
 conductivityInstance.createAlpha()
+endtime = time()
+print(f"Time taken to create Alpha =  {endtime - starttime}")
+
+starttime = time()
 conductivityInstance.createSigma()
 endtime = time()
 print(f"Time taken to calculate conductivity = {endtime - starttime}")
