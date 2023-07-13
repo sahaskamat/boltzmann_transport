@@ -6,13 +6,15 @@ import matplotlib.pyplot as plt
 from time import time
 
 starttime = time()
+B = [0,1*np.sin(np.deg2rad(70)),1*np.cos(np.deg2rad(70))]
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,True,B)
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-orbitsinstance.createOrbits([0,1*np.sin(np.deg2rad(80)),1*np.cos(np.deg2rad(80))],0.1)
+orbitsinstance.createOrbits(B,0.1)
 orbitsinstance.createOrbitsEQS(0.05)
+print(len(orbitsinstance.orbitsEQS))
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
 conductivityInstance.createAMatrix()

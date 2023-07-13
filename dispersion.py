@@ -89,7 +89,7 @@ class LSCOdispersion:
         self.c = 2*6.6
 
         #hopping parameters in eV from Yawen and Gael's paper:
-        T = (160-30)*(10**(-3))
+        T = (160)*(10**(-3))
         T1 = -0.1364*T
         T11 = 0.0682*T
         Tz = 0.0651*T

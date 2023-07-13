@@ -4,13 +4,17 @@ import conductivity
 import numpy as np
 import matplotlib.pyplot as plt
 
+B = [0,1,1]
+
 dispersionInstance = dispersion.FreeElectronDispersion(1,2,7)
 
-initialpointsInstance = orbitcreation.InitialPoints(20,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InitialPoints(5,dispersionInstance,False,B)
 
 orbitsinstance = orbitcreation.Orbits(dispersionInstance,initialpointsInstance)
-orbitsinstance.createOrbits([0,0,1],0.01)
-orbitsinstance.createOrbitsEQS(0.011)
+orbitsinstance.createOrbits(B,0.100)
+orbitsinstance.createOrbitsEQS(0.101)
+print(len(orbitsinstance.orbitsEQS))
+orbitsinstance.plotOrbitsEQS()
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
 conductivityInstance.createAMatrix()
@@ -24,4 +28,6 @@ print(f"Relative value of rhoxy: {(42.689824241E-3)/(rhoxy)}")
 
 print(f"Absolute value for rhoxx: {rhoxx}")
 print(f"Relative value of rhoxx: {2.42718549066E-3/rhoxx}")
+
+print(f"Calculated total area: {conductivityInstance.areasum}")
 
