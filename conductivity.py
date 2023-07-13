@@ -96,16 +96,18 @@ class Conductivity:
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
-        dedk_list = []
+        self.dedk_list = []
         moddedk_list = []
 
         for curve in self.orbitsInstance.orbitsEQS:
             for state in curve:
-                dedk_list.append(self.dispersionInstance.dedk(state))
-                moddedk_list.append(self.dispersionInstance.dedk(state)/np.linalg.norm(self.dispersionInstance.dedk(state)))
+                dedk=self.dispersionInstance.dedk(state)
+
+                self.dedk_list.append(dedk)
+                moddedk_list.append(dedk/np.linalg.norm(dedk))
 
         #convert list to nparray
-        self.dedk_array = np.matrix(dedk_list)
+        self.dedk_array = np.matrix(self.dedk_list)
         self.moddedk_array = np.matrix(moddedk_list)
 
         #multiply Ainv with the ath component of dedk to obtain alpha
@@ -133,7 +135,7 @@ class Conductivity:
                         nextpoint = curve[(j+1)%len(curve)]
 
                         starttime = time()
-                        perpterm = self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz)
+                        perpterm = self.dispersionInstance.dkperp(self.orbitsInstance.B,self.initialPointsInstance.dkz,self.dedk_list[i])
                         endtime = time()
                         perpterm_time += (endtime-starttime)
 

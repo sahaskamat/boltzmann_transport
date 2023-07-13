@@ -163,10 +163,10 @@ class LSCOdispersion:
         #takes input p as a list of [px,py,pz] and returns of de/dk at that p
         return np.array(self.graden_numeric(p[0],p[1],p[2]))
 
-    def dkperp(self,p,B,dkz):
+    def dkperp(self,B,dkz,dedk):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
-        nvec = cross(self.dedk(p),cross(self.dedk(p),B)) #nvec = dedk x (dedk x B)
+        nvec = cross(dedk,cross(dedk,B)) #nvec = dedk x (dedk x B)
         scalar_term = (dot(dkz,B))/(dot(nvec,B))
         dkperp = [scalar_term*nvec[i] for i in range(3)]
         return dkperp
