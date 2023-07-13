@@ -7,6 +7,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1" # export NUMEXPR_NUM_THREADS=6
 import numpy as np
 import scipy as sp
 import dispersion
+from time import time
 
 class Conductivity:
     """
@@ -54,7 +55,7 @@ class Conductivity:
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                graddata = np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+                graddata = np.linalg.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
                 Adata.append(graddata)
                 Aposition_i.append(i)
                 Aposition_j.append(i_next)
@@ -115,6 +116,9 @@ class Conductivity:
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])
+        patcharea_time = 0
+        sigma_time = 0
+        perpterm_time = 0
 
         for mu in range(3):
             for nu in range(3):
@@ -122,14 +126,29 @@ class Conductivity:
                 self.areasum = 0
                 #i is an iterator that iterates over the hilbert space
                 i=0
-                for curvenum,curve in enumerate(self.orbitsInstance.orbitsEQS):
+                for curve in self.orbitsInstance.orbitsEQS:
                     #we are iterating over the curvenum'th orbit
                     #j is an iterator that iterates over the current orbit
                     for j,state in enumerate(curve):
                         nextpoint = curve[(j+1)%len(curve)]
-                        patcharea = np.linalg.norm(np.cross(state-nextpoint,self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz)))
 
+                        starttime = time()
+                        perpterm = self.dispersionInstance.dkperp(state,self.orbitsInstance.B,self.initialPointsInstance.dkz)
+                        endtime = time()
+                        perpterm_time += (endtime-starttime)
+
+                        starttime = time()
+                        patcharea = np.linalg.norm(dispersion.cross(state-nextpoint,perpterm))
+                        endtime = time()
+                        patcharea_time+= (endtime - starttime)
+
+                        starttime = time()
                         self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea
+                        endtime = time()
+                        sigma_time += (endtime-starttime)
+
                         self.areasum += patcharea
 
                         i+=1
+
+        print("Time spent calculating patch areas:",patcharea_time," Time spent calculating sigmas:",sigma_time,"Time spent calculating perpterm",perpterm_time)
