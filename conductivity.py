@@ -147,4 +147,4 @@ class Conductivity:
 
                         i+=1
 
-        print("Time spent calculating patch areas:",patcharea_time," Time spent calculating sigmas:",sigma_time,"Time spent calculating perpterm",perpterm_time)
+        #print("Time spent calculating patch areas:",patcharea_time," Time spent calculating sigmas:",sigma_time,"Time spent calculating perpterm",perpterm_time)

@@ -24,9 +24,9 @@ starttime = time()
 def getsigma(theta):
     B = [45*np.sin(np.deg2rad(theta))*np.cos(phi_rad),45*np.sin(np.deg2rad(theta))*np.sin(phi_rad),45*np.cos(np.deg2rad(theta))]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.01)
+    orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
-    endtime = time()
+    print("Orbit created for theta=",theta)
     #print(f'orbitcreation completed for {theta} degrees')
     #if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)

@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from time import time
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(50,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,True)
 
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(20)
+initialpointsInstance.createPlaneAnchors(40)
 #initialpointsInstance.plotpoints()
 endtime = time()
 
