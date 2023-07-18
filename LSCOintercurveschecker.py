@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 from time import time
 
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(50,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,True)
 
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(20)
+initialpointsInstance.createPlaneAnchors(60)
 #initialpointsInstance.plotpoints()
 endtime = time()
 
@@ -27,7 +27,7 @@ print(f"Time taken to create initialcurves = {endtime - starttime}")
 
 theta = np.deg2rad(80)
 phi = np.deg2rad(0)
-B = [1*np.sin(theta)*np.cos(phi),1*np.sin(theta)*np.sin(phi),1*np.cos(theta)]
+B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
 intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
 #plottingintersections
@@ -35,8 +35,8 @@ intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
 starttime = time()
 orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-orbitsinstance.createOrbits(B)
-orbitsinstance.createOrbitsEQS()
+orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
+orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
 listoforbits = orbitsinstance.orbitsEQS
 endtime = time()
 print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}")
