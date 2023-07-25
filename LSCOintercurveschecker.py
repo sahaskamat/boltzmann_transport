@@ -12,7 +12,7 @@ initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(60)
+initialpointsInstance.createPlaneAnchors(80)
 #initialpointsInstance.plotpoints()
 endtime = time()
 
