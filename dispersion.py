@@ -96,51 +96,39 @@ class LSCOdispersion:
         #############################################################################################
 
         #define lattice constants in angstroms
-        self.a = 3.75
-        self.b= self.a
-        self.c = 2*6.6
+        a = 3.75
+        b = a
+        c = 2*6.6
+
+        self.a,self.b,self.c = a,b,c
 
         #hopping parameters in eV from Yawen and Gael's paper:
         T = (160)*(10**(-3))
         T1 = -0.1364*T
         T11 = 0.0682*T
         Tz = 0.0651*T
-        self.mu = -mumultvalue*T #this is the critical point value
+        mu = -mumultvalue*T #this is the critical point value
         #mu = -1.15*T #this is a value far from the lifshits singularity (and hence the fermi surface does not cross the van hove points)
-        #now we symbolically define the dispersion
-        kx, ky, kz = symp.symbols('kx ky kz')
-
-        en = -self.mu - 2*T*(symp.cos(kx*self.a) + symp.cos(ky*self.a)) - 4*T1*symp.cos(kx*self.a)*symp.cos(ky*self.a) - 2*T11*(symp.cos(2*kx*self.a) + symp.cos(2*ky*self.a)) - 2*Tz*symp.cos((kx*self.a)/2)*symp.cos((ky*self.a)/2)*symp.cos((kz*self.c)/2)*((symp.cos(kx*self.a) - symp.cos(ky*self.a))**2)
-        graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
         #############################################################################################
-        #end LSCO specific functions
+        #now define functions that have been spit out by mathematica code
         #############################################################################################
 
-        from sympy.vector import CoordSys3D
-        #now we write the RHS of the equation of motion, v \cross B
+        def RHS_numeric(k,B):
+            kx,ky,kz = k[0],k[1],k[2]
+            Bx,By,Bz = B[0],B[1],B[2]
+            return ( [( a * Bz * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( -2 * a * Bz * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( a * Bz * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * ky ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( 2 * a * Bz * T * np.sin( a * ky ) + ( 4 * a * Bz * T1 * np.cos( a * kx ) * np.sin( a * ky ) + ( -4 * a * Bz * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * ky ) + ( 4 * a * Bz * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * ky ) + ( 4 * a * Bz * T11 * np.sin( 2 * a * ky ) + ( -1 * By * c * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * a * ky ) * np.sin( 1/2 * c * kz ) + ( 2 * By * c * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.sin( 1/2 * c * kz ) + -1 * By * c * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( np.cos( a * ky ) )**( 2 ) * np.sin( 1/2 * c * kz ) ) ) ) ) ) ) ) ) ) ),( -1 * a * Bz * Tz * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( 2 * a * Bz * Tz * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( -1 * a * Bz * Tz * np.cos( 1/2 * a * ky ) * ( np.cos( a * ky ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( -2 * a * Bz * T * np.sin( a * kx ) + ( -4 * a * Bz * T1 * np.cos( a * ky ) * np.sin( a * kx ) + ( -4 * a * Bz * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * kx ) + ( 4 * a * Bz * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * kx ) + ( -4 * a * Bz * T11 * np.sin( 2 * a * kx ) + ( Bx * c * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * a * ky ) * np.sin( 1/2 * c * kz ) + ( -2 * Bx * c * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.sin( 1/2 * c * kz ) + Bx * c * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( np.cos( a * ky ) )**( 2 ) * np.sin( 1/2 * c * kz ) ) ) ) ) ) ) ) ) ) ),( a * By * Tz * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( -2 * a * By * Tz * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( a * By * Tz * np.cos( 1/2 * a * ky ) * ( np.cos( a * ky ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( 2 * a * By * T * np.sin( a * kx ) + ( 4 * a * By * T1 * np.cos( a * ky ) * np.sin( a * kx ) + ( 4 * a * By * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * kx ) + ( -4 * a * By * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * kx ) + ( 4 * a * By * T11 * np.sin( 2 * a * kx ) + ( -1 * a * Bx * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * kx ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( 2 * a * Bx * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( -1 * a * Bx * Tz * np.cos( 1/2 * a * kx ) * ( np.cos( a * ky ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( -2 * a * Bx * T * np.sin( a * ky ) + ( -4 * a * Bx * T1 * np.cos( a * kx ) * np.sin( a * ky ) + ( 4 * a * Bx * Tz * np.cos( 1/2 * a * kx ) * np.cos( a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * ky ) + ( -4 * a * Bx * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * np.cos( a * ky ) * np.cos( 1/2 * c * kz ) * np.sin( a * ky ) + -4 * a * Bx * T11 * np.sin( 2 * a * ky ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ),] )
 
-        R = CoordSys3D('R')
-        gradvec = graden[0]*R.i + graden[1]*R.j + graden[2]*R.k
+        def en_numeric(kx,ky,kz):
+            return ( -1 * mu + ( -4 * T1 * np.cos( a * kx ) * np.cos( a * ky ) + ( -2 * T * ( np.cos( a * kx ) + np.cos( a * ky ) ) + ( -2 * T11 * ( np.cos( 2 * a * kx ) + np.cos( 2 * a * ky ) ) + -2 * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) )**( 2 ) * np.cos( 1/2 * c * kz ) ) ) ) )
 
-        Bx,By,Bz  =symp.symbols('Bx By Bz')
-        Bvec = Bx*R.i + By*R.j + Bz*R.k
+        def graden_numeric(kx,ky,kz):
+            return ( [( a * Tz * np.cos( 1/2 * a * ky ) * ( ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * kx ) + ( 2 * a * T * np.sin( a * kx ) + ( 4 * a * T1 * np.cos( a * ky ) * np.sin( a * kx ) + ( 4 * a * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) * np.cos( 1/2 * c * kz ) * np.sin( a * kx ) + 4 * a * T11 * np.sin( 2 * a * kx ) ) ) ) ),( a * Tz * np.cos( 1/2 * a * kx ) * ( ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) )**( 2 ) * np.cos( 1/2 * c * kz ) * np.sin( 1/2 * a * ky ) + ( 2 * a * T * np.sin( a * ky ) + ( 4 * a * T1 * np.cos( a * kx ) * np.sin( a * ky ) + ( -4 * a * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) * np.cos( 1/2 * c * kz ) * np.sin( a * ky ) + 4 * a * T11 * np.sin( 2 * a * ky ) ) ) ) ),c * Tz * np.cos( 1/2 * a * kx ) * np.cos( 1/2 * a * ky ) * ( ( np.cos( a * kx ) + -1 * np.cos( a * ky ) ) )**( 2 ) * np.sin( 1/2 * c * kz ),] )
 
-        #this is v \cross B converted to a scipy matrix
-        force = gradvec.cross(Bvec).to_matrix(R)
-        force = force.transpose()
-
-        #this converts v \cross B into a numerical function that can be passed to scipy.odeint
-        force_numeric = symp.lambdify([kx,ky,kz,Bx,By,Bz],force)
-        self.RHS_numeric = lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0]
-
-        #first convert symbolic dispersion to numeric function
-        self.en_numeric = symp.lambdify([kx,ky,kz],en)
-
-        #define functions used in the A matrix calculations
-        self.graden_numeric  = symp.lambdify([kx,ky,kz],graden)
+        self.RHS_numeric,self.en_numeric,self.graden_numeric = RHS_numeric,en_numeric,graden_numeric
 
     #function that defines the angle dependence of invtau, to be multiplied with invtau_aniso
+    
     def angledependence(self,p):
         return np.float_power(np.abs((p[1]**2-p[0]**2)/(p[1]**2+p[0]**2)),12)
 
