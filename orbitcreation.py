@@ -147,7 +147,7 @@ class InterpolatedCurves:
             upperz = upperbound[2]
             lowerz = lowerbound[2]
 
-            for i in range(20):
+            for i in range(10):
                 midz = (upperz+lowerz)/2
 
                 upperpoint = [extendedinterpolatedcurve(upperz)[0],extendedinterpolatedcurve(upperz)[1],upperz]
@@ -200,6 +200,8 @@ class NewOrbits:
         self.dispersion = dispersion
         self.interpolatedcurves = interpolatedcurves
 
+        self.timespentfindingpoints = 0
+
         try:
             self.interpolatedcurves.extendedcurvesList #since many methods for this class are defined using extendedcurvesList, this makes sure it exists
         except NameError:
@@ -220,7 +222,11 @@ class NewOrbits:
         """
         B_normalized = np.array(B)/np.linalg.norm(B)
 
+        #find starting points lying on plane and also time it
+        starttime = time()
         initialpointslist = self.interpolatedcurves.findintersections(B,pointonplane)
+        endtime = time()
+        self.timespentfindingpoints += (endtime-starttime)
 
         #the force v \cross B term but now with fixed B
         RHS_withB = lambda t,k : self.dispersion.RHS_numeric(k,mult_factor*B_normalized)

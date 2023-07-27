@@ -39,7 +39,7 @@ orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
 orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
 listoforbits = orbitsinstance.orbitsEQS
 endtime = time()
-print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}")
+print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
 
 starttime = time()
 conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
