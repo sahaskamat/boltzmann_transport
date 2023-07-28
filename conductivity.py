@@ -49,7 +49,7 @@ class Conductivity:
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
 
-                graddata = np.linalg.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+                graddata = dispersion.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
                 Adata.append(graddata)
                 Aposition_i.append(i)
                 Aposition_j.append(i_next)
@@ -126,7 +126,7 @@ class Conductivity:
                         nextpoint = curve[(j+1)%len(curve)]
 
                         perpterm = self.dispersionInstance.dkperp(self.orbitsInstance.B,self.initialPointsInstance.dkz,self.dedk_list[i])
-                        patcharea = np.linalg.norm(dispersion.cross(state-nextpoint,perpterm))
+                        patcharea = dispersion.norm(dispersion.cross(state-nextpoint,perpterm))
 
                         self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea
 

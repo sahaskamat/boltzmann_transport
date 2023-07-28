@@ -1,10 +1,12 @@
 import sympy as symp
 import numpy as np
+from math import sqrt
 from numba import njit
 
 def deltap(p1,p2):
     #takes input p1 and p2 as lists and returns magnitude of their difference
-    return np.linalg.norm(np.array(p1) - np.array(p2))
+    #works only for p1 and p2 of length 3
+    return norm([p1[i]-p2[i] for i in range(3)])
 
 def cross(a, b):
     #manually defined cross product since np.cross is very slow
@@ -17,6 +19,11 @@ def cross(a, b):
 def dot(a,b):
     #manually defined dot product since numpy is very slow
     result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+    return result
+
+def norm(p):
+    #manually define norm without going through numpy
+    result = sqrt(p[0]**2 + p[1]**2 + p[2]**2)
     return result
 
 class LSCOdispersion:
