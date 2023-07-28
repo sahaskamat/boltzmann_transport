@@ -1,6 +1,5 @@
 import sympy as symp
 import numpy as np
-from numba import jit
 from numba import njit
 
 def deltap(p1,p2):
@@ -97,7 +96,8 @@ class LSCOdispersion:
 
         return (invtau_iso + invtau_aniso*angledependence)
 
-    def dkperp(self,B,dkz,dedk):
+    @staticmethod
+    def dkperp(B,dkz,dedk):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
         nvec = cross(dedk,cross(dedk,B)) #nvec = dedk x (dedk x B)
