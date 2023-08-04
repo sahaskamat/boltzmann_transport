@@ -39,7 +39,7 @@ class Conductivity:
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
 
-            for state in orbit:
+            for state_id,state in enumerate(orbit):
                 #diagonal term coming from scattering out
                 Adata.append(self.dispersionInstance.invtau(state))
                 Aposition_i.append(i)
@@ -48,8 +48,9 @@ class Conductivity:
                 #off diagonal terms that simulate the derivative term from the boltzmann equation
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
-
-                graddata = dispersion.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i_prev - submatrixindex])*(6.582119569**2))
+ 
+                graddata = dispersion.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[(state_id +1)%m],orbit[(state_id-1)%m])*(6.582119569**2))
+                    
                 Adata.append(graddata)
                 Aposition_i.append(i)
                 Aposition_j.append(i_next)
