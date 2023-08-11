@@ -84,10 +84,10 @@ class LSCOdispersion:
         self.en_numeric = njit(symp.lambdify([kx,ky,kz],en))
 
         #define functions used in the A matrix calculations
-        graden_numeric  = njit(symp.lambdify([kx,ky,kz],graden))
+        graden_numeric  = (symp.lambdify([kx,ky,kz],graden,"numpy"))
         self.graden_numeric = graden_numeric
 
-        self.dedk = njit(lambda p: graden_numeric(p[0],p[1],p[2]))
+        self.dedk = (lambda p: graden_numeric(p[0],p[1],p[2]))
 
     #function that defines the angle dependence of invtau, to be multiplied with invtau_aniso
 
@@ -107,7 +107,7 @@ class LSCOdispersion:
     def dkperp(B,dkz,dedk):
         #this calculates the length element lying along the fermi surface for integration
         #dkz is any point on the plane containing the next orbit
-        nvec = cross(dedk,cross(dedk,B)) #nvec = dedk x (dedk x B)
-        scalar_term = (dot(dkz,B))/(dot(nvec,B))
-        dkperp = [scalar_term*nvec[i] for i in range(3)]
+        nvec = np.cross(dedk,np.cross(dedk,B)) #nvec = dedk x (dedk x B)
+        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B))
+        dkperp = scalar_term[:,None]*nvec
         return dkperp
