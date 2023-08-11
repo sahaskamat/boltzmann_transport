@@ -24,6 +24,13 @@ class Conductivity:
         for orbit in self.orbitsInstance.orbitsEQS:
             self.n  += len(orbit)
 
+        deltaplist = []
+        for orbit in self.orbitsInstance.orbitsEQS:
+            orbit_plus1 = np.roll(orbit,-1,axis=0)
+            orbit_minus1 = np.roll(orbit,1,axis=0)
+            deltaplist.append(np.linalg.norm(orbit_plus1 - orbit_minus1,axis=1))
+        deltaparray =   np.array([value for sublist in deltaplist for value in sublist])
+
         #units of A are ps-1
         Adata = []
         Aposition_i = []
@@ -36,12 +43,20 @@ class Conductivity:
         submatrixindex = 0
         submatrixindexlist = [0] #keeps track of all submatrix starting points
 
+        #creates a list of states in the same order as they would appear in the double loop
+        stateslist = np.array([state for orbit in self.orbitsInstance.orbitsEQS for state in orbit]) #stateslist[i] = ith state
+        invtaulist = self.dispersionInstance.invtau(np.transpose(stateslist)) #invtaulist[i]  = invtau(stateslist[i])
+        self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(stateslist))) #self.dedk_list[i] = dedk(stateslist[i])
+        crosslist  = np.cross(self.dedk_list,self.orbitsInstance.B) #crosslist[i]  = dedk(state[i]) x B
+        normlist = np.linalg.norm(crosslist,axis=1) #normlist[i] = norm(dedk(state[i]) x B)
+        graddatalist = normlist/(deltaparray*(6.582119569**2)) #graddatalist[i] = norm(dedk(state[i]) x B)/norm(state[i+1] - state[i])
+
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
 
             for state_id,state in enumerate(orbit):
                 #diagonal term coming from scattering out
-                Adata.append(self.dispersionInstance.invtau(state))
+                Adata.append(invtaulist[i])
                 Aposition_i.append(i)
                 Aposition_j.append(i)
 
@@ -49,7 +64,7 @@ class Conductivity:
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
  
-                graddata = dispersion.norm(dispersion.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[(state_id +1)%m],orbit[(state_id-1)%m])*(6.582119569**2))
+                graddata = graddatalist[i]
                     
                 Adata.append(graddata)
                 Aposition_i.append(i)
@@ -91,47 +106,36 @@ class Conductivity:
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
-        self.dedk_list = []
-        moddedk_list = []
-
-        for curve in self.orbitsInstance.orbitsEQS:
-            for state in curve:
-                dedk=self.dispersionInstance.dedk(state)
-
-                self.dedk_list.append(dedk)
-                moddedk_list.append(dedk/np.linalg.norm(dedk))
-
-        #convert list to nparray
-        self.dedk_array = np.matrix(self.dedk_list)
-        self.moddedk_array = np.matrix(moddedk_list)
+        self.moddedk_array = self.dedk_list/np.linalg.norm(self.dedk_list,axis=1)[:,None]
 
         #multiply Ainv with the ath component of dedk to obtain alpha
         #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = sp.sparse.linalg.spsolve(self.A,self.dedk_array)
+        self.alpha = sp.sparse.linalg.spsolve(self.A,self.dedk_list)
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])
 
+        #perptermlist[i] is a vector that lies along the fermi surface, pointing from the ith point to the orbit above it
+        perptermlist = self.dispersionInstance.dkperp(self.orbitsInstance.B,self.initialPointsInstance.dkz,self.dedk_list)
+
+        #nextstatepointerarray[i] is a vector that lies along the fermi surface and points from the ith point to the succeeding point on a given orbit
+        nextstatepointerlist = []
+        for orbit in self.orbitsInstance.orbitsEQS:
+            orbit_plus1 = np.roll(orbit,-1,axis=0)
+            nextstatepointerlist.append(orbit - orbit_plus1)
+        nextstatepointerarray =   np.array([value for sublist in nextstatepointerlist for value in sublist])
+
+        #patcharealist[i] is the integration patch area corresponding to the ith point
+        patcharealist = np.linalg.norm(np.cross(nextstatepointerarray,perptermlist),axis=1)
+
         for mu in range(3):
             for nu in range(3):
                 #this keeps track of the total area over which we integrate
                 self.areasum = 0
-                #i is an iterator that iterates over the hilbert space
-                i=0
-                for curve in self.orbitsInstance.orbitsEQS:
-                    #we are iterating over the curvenum'th orbit
-                    #j is an iterator that iterates over the current orbit
-                    for j,state in enumerate(curve):
-                        nextpoint = curve[(j+1)%len(curve)]
+                self.sigma[mu,nu] = (3.699/(4*(np.pi**3)))*np.sum(self.moddedk_array[:,mu]*self.alpha[:,nu]*patcharealist)
 
-                        perpterm = self.dispersionInstance.dkperp(self.orbitsInstance.B,self.initialPointsInstance.dkz,self.dedk_list[i])
-                        patcharea = dispersion.norm(dispersion.cross(state-nextpoint,perpterm))
+                self.areasum = np.sum(patcharealist)
 
-                        self.sigma[mu,nu] += (3.699/(4*(np.pi**3)))*self.moddedk_array[i,mu]*self.alpha[i,nu]*patcharea
-
-                        self.areasum += patcharea
-
-                        i+=1
 
