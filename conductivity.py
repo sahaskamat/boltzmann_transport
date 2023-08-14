@@ -36,9 +36,6 @@ class Conductivity:
         Aposition_i = []
         Aposition_j = []
 
-        #i is an iterator that iterates over the hilbert space
-        i=0
-
         #number that denotes the index of the beginning of the current submatrix
         submatrixindex = 0
         submatrixindexlist = [0] #keeps track of all submatrix starting points
@@ -50,6 +47,9 @@ class Conductivity:
         crosslist  = np.cross(self.dedk_list,self.orbitsInstance.B) #crosslist[i]  = dedk(state[i]) x B
         normlist = np.linalg.norm(crosslist,axis=1) #normlist[i] = norm(dedk(state[i]) x B)
         graddatalist = normlist/(deltaparray*(6.582119569**2)) #graddatalist[i] = norm(dedk(state[i]) x B)/norm(state[i+1] - state[i])
+
+        #i is an iterator that iterates over the hilbert space
+        i=0
 
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
