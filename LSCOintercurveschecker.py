@@ -19,7 +19,7 @@ def main():
 
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
-    initialpointsInstance.extendedZoneMultiply(5)
+    initialpointsInstance.extendedZoneMultiply(1)
     initialpointsInstance.createPlaneAnchors(80)
     #initialpointsInstance.plotpoints()
     endtime = time()
@@ -33,7 +33,7 @@ def main():
     #for curve in initialpointsInstance.extendedcurvesList:
     #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-    theta = np.deg2rad(80)
+    theta = np.deg2rad(10)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
     intersections = initialpointsInstance.findintersections(B,[0,0,0])
@@ -70,13 +70,10 @@ def main():
     endtime = time()
     print(f"Time taken to calculate conductivity = {endtime - starttime}")
 
-    #orbitsinstance.orbitdiagnosticplot()
+    orbitsinstance.orbitdiagnosticplot()
 
     #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
     #plt.show()
 
-cProfile.run('main()',filename='stats.prof')
-
-with open('outputstats.txt', 'w') as stream:
-   stats = pstats.Stats('stats.prof', stream=stream).sort_stats('cumtime')
-   stats.print_stats()
+#cProfile.run('main()',filename='stats.prof')
+main()
