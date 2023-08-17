@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
 import dispersion
+from numba import njit
 
 ########################
 # Module to find number of CPUS
@@ -236,8 +237,11 @@ class NewOrbits:
         self.timespentfindingpoints += (endtime-starttime)
 
         #the force v \cross B term but now with fixed B
+        RHS_numeric = self.dispersion.RHS_numeric
+
+        @njit
         def RHS_withB(t,k):
-            return self.dispersion.RHS_numeric(k,mult_factor*B_normalized)
+            return RHS_numeric(k,mult_factor*B_normalized)
 
         #timestamps on which to start and end integration (in principle, the endpoint will not be required)
         t_span = (sampletimes[0],sampletimes[-1])
