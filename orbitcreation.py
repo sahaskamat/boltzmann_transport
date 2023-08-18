@@ -252,15 +252,17 @@ class NewOrbits:
         while initialpointslist.size > 0:
             initial = initialpointslist[0]
 
+            """
             def event_fun(t,k):
                 return  dispersion.norm(np.array(k)-np.array(initial)) - termination_resolution
 
             event_fun.terminal = True # make event function terminal -- this is the terminating event
             event_fun.direction = -1 #event function only triggered when it is decreasing
+            """
 
-            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-7,atol=1e-8)
+            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True,method='LSODA',rtol=1e-7,atol=1e-8)
             orbit = np.transpose(solution.y)
-
+            
             #now check if any other elements of initialpointslist appear in orbit
             elementstobedeleted= []
 
@@ -276,7 +278,7 @@ class NewOrbits:
         #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
 
-    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -311,16 +313,25 @@ class NewOrbits:
             """
             #Find distances of points from initial point to tell where orbit closes
             diffvectors = orbit - np.outer(np.ones(orbit.shape[0]),orbit[0])
-            diffvectorsnorm = np.linalg.norm(diffvectors,axis=1)
-            plt.plot(diffvectorsnorm)
+            diffvectorsnorm = np.linalg.norm(diffvectors,axis=1) #array of distances from initial point
+            d_diffvectorsnorm = np.diff(diffvectorsnorm,append=0) #derivative of diffvectorsnorm. Value of 0 appended to keep length same as diffvectorsnorm
+
+            #orbit is close to completion when 1.diffvectorsnorm is close to zero 2.the derivative of diffvectorssnorm is negative 
+            whereclosetozero = np.isclose(diffvectorsnorm,0,atol=integration_resolution)
+            wherenegativederivative = d_diffvectorsnorm < 0
+            orbitcompletionindices = np.arange(diffvectorsnorm.size)[np.logical_and(whereclosetozero,wherenegativederivative)] #set of indices where orbit closes
+            firstindexofcompletion = orbitcompletionindices[0] #first index where orbit closes
+            firstorbit = orbit[:firstindexofcompletion,:] #array elements corresponding to the first completed orbit
+
+            plt.plot(firstorbit[:,0],ls ="",marker="o",ms = 1)
 
             #add initial point to equally spaced orbit
-            startingpoint = orbit[0]
+            startingpoint = firstorbit[0]
             currentpoint  = startingpoint
             singleorbitEQS = np.array([currentpoint],ndmin=2)
 
             #keep iterating over points in the orbit
-            for id,point in enumerate(orbit):
+            for id,point in enumerate(firstorbit):
                 #if this point is sufficiently far away from previous point, add point to list
                 if dispersion.norm(currentpoint - point) > integration_resolution:
                     currentpoint = point
