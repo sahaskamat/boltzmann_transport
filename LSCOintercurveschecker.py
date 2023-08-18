@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(1)
-    initialpointsInstance.createPlaneAnchors(80)
+    initialpointsInstance.createPlaneAnchors(1)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -45,6 +45,7 @@ def main():
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
+    """
     listoforbits = orbitsinstance.orbitsEQS
     endtime = time()
     print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
@@ -73,7 +74,9 @@ def main():
     orbitsinstance.orbitdiagnosticplot()
 
     #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
-    #plt.show()
+    #plt.show()    
+    """
 
 #cProfile.run('main()',filename='stats.prof')
 main()
+plt.show()
