@@ -309,6 +309,11 @@ class NewOrbits:
             """
             This function creates an equally spaced orbit out of the input orbit, and appends it to self.orbitsEQS if it has mroe than three points
             """
+            #Find distances of points from initial point to tell where orbit closes
+            diffvectors = orbit - np.outer(np.ones(orbit.shape[0]),orbit[0])
+            diffvectorsnorm = np.linalg.norm(diffvectors,axis=1)
+            plt.plot(diffvectorsnorm)
+
             #add initial point to equally spaced orbit
             startingpoint = orbit[0]
             currentpoint  = startingpoint
