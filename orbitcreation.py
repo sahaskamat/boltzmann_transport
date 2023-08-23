@@ -6,10 +6,11 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
 import dispersion
-from numba import njit
+from numba import njit,cfunc
+from numbalsoda import lsoda_sig, lsoda, dop853
 
 ########################
-# Module to find number of CPUS
+# Module to find number of CPUSnumbalsoda
 ##########################
 import multiprocessing
 from joblib import delayed, Parallel
@@ -239,29 +240,23 @@ class NewOrbits:
         #the force v \cross B term but now with fixed B
         RHS_numeric = self.dispersion.RHS_numeric
 
-        @njit
-        def RHS_withB(t,k):
-            return RHS_numeric(k,mult_factor*B_normalized)
+        @cfunc(lsoda_sig)
+        def RHS_withB(t,k,dk,p):
+            [dk[0],dk[1],dk[2]] = RHS_numeric([k[0],k[1],k[2]],mult_factor*B_normalized)
 
-        #timestamps on which to start and end integration (in principle, the endpoint will not be required)
-        t_span = (sampletimes[0],sampletimes[-1])
+        RHS_withB_address = RHS_withB.address
 
         #list of orbits in plane
         orbitsinplane = []
 
         while initialpointslist.size > 0:
-            initial = initialpointslist[0]
+            initial = np.array(initialpointslist[0])
 
-            """
-            def event_fun(t,k):
-                return  dispersion.norm(np.array(k)-np.array(initial)) - termination_resolution
-
-            event_fun.terminal = True # make event function terminal -- this is the terminating event
-            event_fun.direction = -1 #event function only triggered when it is decreasing
-            """
-
-            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True,method='LSODA',rtol=1e-7,atol=1e-8)
-            orbit = np.transpose(solution.y)
+            #starttime = time()
+            solution,success = lsoda(RHS_withB_address, initial, sampletimes,rtol=1e-7,atol=1e-8)
+            #endtime = time()
+            orbit = (solution)
+            #print("Time taken to create orbits = ",endtime - starttime)
             
             #now check if any other elements of initialpointslist appear in orbit
             elementstobedeleted= []
@@ -278,7 +273,7 @@ class NewOrbits:
         #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
 
-    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,1000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -323,7 +318,7 @@ class NewOrbits:
             firstindexofcompletion = orbitcompletionindices[0] #first index where orbit closes
             firstorbit = orbit[:firstindexofcompletion,:] #array elements corresponding to the first completed orbit
 
-            plt.plot(firstorbit[:,0],ls ="",marker="o",ms = 1)
+            #plt.plot(firstorbit[:,0],ls ="",marker="o",ms = 1)
 
             #add initial point to equally spaced orbit
             startingpoint = firstorbit[0]
