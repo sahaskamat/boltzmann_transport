@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(20)
+    initialpointsInstance.createPlaneAnchors(80)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -75,7 +75,7 @@ def main():
 
     #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
     #plt.show()    
-    """
+"""
 
 cProfile.run('main()',filename='stats.prof')
 #main()

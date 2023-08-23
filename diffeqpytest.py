@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 @cfunc(lsoda_sig)
 def f(t, u, du, p):
     du[0] = u[0]-u[0]*u[1]
-    du[1] = u[0]*u[1]-u[1]
+    du[1] = u[0]*u[1]-u[1]*p[0]
 
 @njit
 def f_scipy(t, u):
