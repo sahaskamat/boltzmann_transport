@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(1)
+    initialpointsInstance.createPlaneAnchors(20)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -36,7 +36,6 @@ def main():
     theta = np.deg2rad(80)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
-    intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
     #plottingintersections
     #ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
@@ -45,7 +44,7 @@ def main():
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
-    orbitsinstance.orbitdiagnosticplot()
+    #orbitsinstance.orbitdiagnosticplot()
     """
     listoforbits = orbitsinstance.orbitsEQS
     endtime = time()
@@ -78,6 +77,6 @@ def main():
     #plt.show()    
     """
 
-#cProfile.run('main()',filename='stats.prof')
-main()
-plt.show()
+cProfile.run('main()',filename='stats.prof')
+#main()
+#plt.show()
