@@ -140,7 +140,7 @@ class InterpolatedCurves:
             """
             planeequation(kvector) = 0 is the equation of the plane defined by normalvector and pointonplane
             """
-            return dispersion.dot(kvector,normalvector) - dispersion.dot(pointonplane,normalvector)
+            return np.dot(kvector,normalvector) - np.dot(pointonplane,normalvector)
 
         def binaryfindintersection(upperbound,lowerbound,planeequation,interpolatedcurve):
             """
@@ -173,7 +173,7 @@ class InterpolatedCurves:
             midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
             return midpoint
 
-        intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
+        intersectionindices = [np.nonzero(np.diff(np.sign(planeequation(curve)))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
         intersectionpoints = []
 
         for (curve_id,curve) in enumerate(self.extendedcurvesList):
@@ -227,6 +227,7 @@ class NewOrbits:
         self.RHS_withB_address = RHS_withB.address
 
 
+
     def createOrbitsInPlane(self,B,pointonplane,termination_resolution,sampletimes,mult_factor):
         """
         Inputs:
@@ -238,7 +239,6 @@ class NewOrbits:
 
         Creates all possible orbits lying in the plane defined by B and pointonplane
         """
-        B_normalized = np.array(B)/dispersion.norm(B)
 
         #find starting points lying on plane and also time it
         starttime = time()
@@ -253,7 +253,7 @@ class NewOrbits:
             initial = np.array(initialpointslist[0])
 
             #starttime = time()
-            solution,success = lsoda(self.RHS_withB_address, initial, sampletimes,data=B_normalized*mult_factor,rtol=1e-7,atol=1e-8)
+            solution,success = lsoda(self.RHS_withB_address, initial, sampletimes,data=B*mult_factor,rtol=1e-7,atol=1e-8)
             #endtime = time()
             orbit = (solution)
 
@@ -262,10 +262,11 @@ class NewOrbits:
             #now check if any other elements of initialpointslist appear in orbit
             elementstobedeleted= []
 
-            for orbitpoint in orbit:
-                for id,initialpoint in enumerate(initialpointslist):
-                    if dispersion.norm(orbitpoint-initialpoint) < termination_resolution: #this means that initialpoint lies on orbit
-                        elementstobedeleted.append(id) #add index of initialpoint to the array of positions to be deleted
+            for id,initialpoint in enumerate(initialpointslist):
+                normsarray = np.linalg.norm(orbit - initialpoint)
+                closenessarray = np.isclose(normsarray,0,atol=termination_resolution)
+                if np.any(closenessarray):
+                    elementstobedeleted.append(id)
 
             initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
 
@@ -274,7 +275,7 @@ class NewOrbits:
         #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
 
-    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,1000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -286,12 +287,12 @@ class NewOrbits:
         """
         self.orbits = []
         self.termination_resolution = termination_resolution
+        self.B = B
+        self.B_normalized = np.array(B)/dispersion.norm(B)
 
         for point in self.interpolatedcurves.planeAnchors: #creates orbits for each planeanchor and then appends it to self.orbits
-            listoforbitsinplane = self.createOrbitsInPlane(B,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
+            listoforbitsinplane = self.createOrbitsInPlane(self.B_normalized,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
             for orbit in listoforbitsinplane: self.orbits.append(orbit)
-
-        self.B = B
 
     def createOrbitsEQS(self,integration_resolution=0.05):
         """
