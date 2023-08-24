@@ -260,13 +260,13 @@ class NewOrbits:
             #print("Time taken to create orbits = ",endtime - starttime)
             
             #now check if any other elements of initialpointslist appear in orbit
-            elementstobedeleted= []
 
-            for orbitpoint in orbit:
-                for id,initialpoint in enumerate(initialpointslist):
-                    if dispersion.norm(orbitpoint-initialpoint) < termination_resolution: #this means that initialpoint lies on orbit
-                        elementstobedeleted.append(id) #add index of initialpoint to the array of positions to be deleted
-
+            elementstobedeleted = []
+            for id,initialpoint in enumerate(initialpointslist):
+                normsarray = np.linalg.norm(orbit - initialpoint,axis=1)
+                closenessarray = np.isclose(normsarray,0,atol=termination_resolution)
+                if np.any(closenessarray):
+                    elementstobedeleted.append(id) 
 
             initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
 
