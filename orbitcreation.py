@@ -262,11 +262,11 @@ class NewOrbits:
             #now check if any other elements of initialpointslist appear in orbit
             elementstobedeleted= []
 
-            for id,initialpoint in enumerate(initialpointslist):
-                normsarray = np.linalg.norm(orbit - initialpoint)
-                closenessarray = np.isclose(normsarray,0,atol=termination_resolution)
-                if np.any(closenessarray):
-                    elementstobedeleted.append(id)
+            for orbitpoint in orbit:
+                for id,initialpoint in enumerate(initialpointslist):
+                    if dispersion.norm(orbitpoint-initialpoint) < termination_resolution: #this means that initialpoint lies on orbit
+                        elementstobedeleted.append(id) #add index of initialpoint to the array of positions to be deleted
+
 
             initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
 
