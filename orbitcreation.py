@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import root
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
@@ -65,28 +65,24 @@ class InterpolatedCurves:
         #philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
         philist = [0,np.pi]
 
-        def getpoint(startingZcoord,phi):
+        def getpoints(startingZcoords,phi):
             """
-            solve for point lying on FS for a given z coordinate and phi
+            solve for points lying on FS for a given array of z coordinates and phi
             """
             def energyAlongPhi(r0):
                 """
-                returns the value of self.dispersion.en_numeric() along a fixed phi, for a distance from origin r0
+                returns the value of self.dispersion.en_numeric() along a fixed phi, for a distance from origin r0 at z coordinates in startingZcoords
                 """
-                return self.dispersion.en_numeric(r0*np.cos(phi),r0*np.sin(phi),startingZcoord)
+                return self.dispersion.en_numeric(r0*np.cos(phi),r0*np.sin(phi),startingZcoords)
 
+            sol = root(energyAlongPhi,0.5*np.ones(startingZcoords.size))
+            r0 = sol.x #list of radius vector moduli corresponding to points lying on the FS
 
-            r0 = fsolve(energyAlongPhi,0.5,factor=0.1,maxfev=500000)[0]
-            return np.array([r0*np.cos(phi),r0*np.sin(phi),startingZcoord])
+            return np.transpose(np.array([r0*np.cos(phi),r0*np.sin(phi),startingZcoords]))
 
         #create startingpoints by iterating getpoints() over self.planeZcoords
         for phi in philist:
-            if parallelised:
-                startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord,phi) for startingZcoord in self.planeZcoords)
-            else:
-                startingpointslist = [getpoint(startingZcoord,phi) for startingZcoord in self.planeZcoords]
-
-            startingpointsarray = np.array(startingpointslist)
+            startingpointsarray = getpoints(self.planeZcoords,phi)
 
             self.initialcurvesList.append(np.delete(startingpointsarray,-1,axis=0))
 
