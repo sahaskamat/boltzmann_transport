@@ -44,6 +44,8 @@ def main():
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
+    listoforbits = orbitsinstance.orbitsEQS
+    plt.show()    
     #orbitsinstance.orbitdiagnosticplot()
     """
     listoforbits = orbitsinstance.orbitsEQS

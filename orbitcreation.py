@@ -321,18 +321,10 @@ class NewOrbits:
             firstorbit = orbit[:firstindexofcompletion,:] #array elements corresponding to the first completed orbit
 
             #plt.plot(firstorbit[:,0],ls ="",marker="o",ms = 1)
-
-            #add initial point to equally spaced orbit
-            startingpoint = firstorbit[0]
-            currentpoint  = startingpoint
-            singleorbitEQS = np.array([currentpoint],ndmin=2)
-
-            #keep iterating over points in the orbit
-            for id,point in enumerate(firstorbit):
-                #if this point is sufficiently far away from previous point, add point to list
-                if dispersion.norm(currentpoint - point) > integration_resolution:
-                    currentpoint = point
-                    singleorbitEQS = np.append(singleorbitEQS,np.array([currentpoint],ndmin=2),axis=0)
+            shiftedfirstorbit = np.roll(firstorbit,-1,axis=0)
+            cumnormslist = np.cumsum(np.linalg.norm(shiftedfirstorbit-firstorbit,axis=1))
+            equallyspacesindices = np.nonzero(np.diff(np.sign(np.sin(cumnormslist*np.pi/integration_resolution))))
+            singleorbitEQS = firstorbit[equallyspacesindices]
 
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
             if not singleorbitEQS.shape[0] < 3:
