@@ -1,0 +1,9 @@
+name: boltzmann_env
+channels:
+  - defaults
+dependencies:
+  - numbalsoda
+  - scipy
+  - joblib
+  - sympy
+prefix: C:\Users\Sahas\miniconda3\envs\boltzmann_env
