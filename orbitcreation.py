@@ -6,7 +6,8 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
 import dispersion
-from numbalsoda import lsoda
+from numba import njit,cfunc
+from numbalsoda import lsoda_sig, lsoda
 
 ########################
 # Module to find number of CPUSnumbalsoda
@@ -204,7 +205,14 @@ class NewOrbits:
             print("initialcurvesList not extended for interpolatedcurves, extending with nzones =1")
             self.interpolatedcurves.extendedZoneMultiply()
 
-        self.RHS_withB_address = dispersion.RHS_withB.address
+        #the force v \cross B term but now with fixed B
+        RHS_numeric = self.dispersion.RHS_numeric
+
+        @cfunc(lsoda_sig)
+        def RHS_withB(t,k,dk,B ):
+            [dk[0],dk[1],dk[2]] = RHS_numeric([k[0],k[1],k[2]],[B[0],B[1],B[2]])
+
+        self.RHS_withB_address = RHS_withB.address
 
 
 

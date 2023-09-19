@@ -1,8 +1,7 @@
 import sympy as symp
 import numpy as np
 from math import sqrt
-from numba import njit,cfunc
-from numbalsoda import lsoda_sig
+from numba import njit
 
 def deltap(p1,p2):
     #takes input p1 and p2 as lists and returns magnitude of their difference
@@ -79,13 +78,7 @@ class LSCOdispersion:
 
         #this converts v \cross B into a numerical function that can be passed to scipy.odeint
         force_numeric = njit(symp.lambdify([kx,ky,kz,Bx,By,Bz],force))
-        RHS_numeric = njit(lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0])
-
-        @cfunc(lsoda_sig) #converting the jitted function to cfunc that can be used with numbalsoda
-        def RHS_withB(t,k,dk,B ):
-            [dk[0],dk[1],dk[2]] = RHS_numeric([k[0],k[1],k[2]],[B[0],B[1],B[2]])
-
-        self.RHS_withB = RHS_withB
+        self.RHS_numeric = njit(lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0])
 
         #first convert symbolic dispersion to numeric function
         self.en_numeric = (symp.lambdify([kx,ky,kz],en,"numpy"))
