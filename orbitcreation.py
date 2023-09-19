@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from time import time
 import dispersion
 from numba import njit,cfunc
-from numbalsoda import lsoda_sig, lsoda, dop853
+from numbalsoda import lsoda_sig, lsoda
 
 ########################
 # Module to find number of CPUSnumbalsoda
@@ -152,22 +152,14 @@ class InterpolatedCurves:
             upperz = upperbound[2]
             lowerz = lowerbound[2]
 
-            for i in range(10):
-                midz = (upperz+lowerz)/2
+            zcoords = np.linspace(lowerz,upperz,1000) #array of z coordinates between upperz and lowerz to be used for finding a solution
 
-                upperpoint = [extendedinterpolatedcurve(upperz)[0],extendedinterpolatedcurve(upperz)[1],upperz]
-                lowerpoint = [extendedinterpolatedcurve(lowerz)[0],extendedinterpolatedcurve(lowerz)[1],lowerz]
-                midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
+            interpolatedpoints = np.transpose(np.vstack((extendedinterpolatedcurve(zcoords),zcoords)))  #array of three vectors lying on the curve between upperz and lowerz, along whcih to find solutions
+            intersectionindices = [np.nonzero(np.diff(np.sign(planeequation(interpolatedpoints))))] #coordinate where planequation flips sign
+            
+            intersectionpoint = np.reshape(interpolatedpoints[intersectionindices],(3))
 
-                if planeequation(upperpoint)*planeequation(midpoint)<0: #intersection is between upperpoint and midpoint
-                    lowerz = midz
-                elif planeequation(lowerpoint)*planeequation(midpoint)<0: #intersection is between lowerpoint and midpoint
-                    upperz = midz
-                #else:
-                #    raise Exception(("Intersection not found between upperbound and lowerbound"))
-
-            midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
-            return midpoint
+            return intersectionpoint
 
         intersectionindices = [np.nonzero(np.diff(np.sign(planeequation(curve)))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
         intersectionpoints = []

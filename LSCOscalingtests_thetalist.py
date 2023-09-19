@@ -7,7 +7,7 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,80,12)
+thetalist = np.linspace(0,80,20)
 phi = 0
 
 phi_rad = np.deg2rad(phi)
@@ -16,7 +16,7 @@ initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(80)
+initialpointsInstance.createPlaneAnchors(200)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 

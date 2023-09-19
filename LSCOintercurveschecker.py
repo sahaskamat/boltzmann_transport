@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(80)
+    initialpointsInstance.createPlaneAnchors(200)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
