@@ -1,14 +1,16 @@
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import root
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from time import time
 import dispersion
+from numba import njit,cfunc
+from numbalsoda import lsoda_sig, lsoda
 
 ########################
-# Module to find number of CPUS
+# Module to find number of CPUSnumbalsoda
 ##########################
 import multiprocessing
 from joblib import delayed, Parallel
@@ -63,28 +65,24 @@ class InterpolatedCurves:
         #philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
         philist = [0,np.pi]
 
-        def getpoint(startingZcoord,phi):
+        def getpoints(startingZcoords,phi):
             """
-            solve for point lying on FS for a given z coordinate and phi
+            solve for points lying on FS for a given array of z coordinates and phi
             """
             def energyAlongPhi(r0):
                 """
-                returns the value of self.dispersion.en_numeric() along a fixed phi, for a distance from origin r0
+                returns the value of self.dispersion.en_numeric() along a fixed phi, for a distance from origin r0 at z coordinates in startingZcoords
                 """
-                return self.dispersion.en_numeric(r0*np.cos(phi),r0*np.sin(phi),startingZcoord)
+                return self.dispersion.en_numeric(r0*np.cos(phi),r0*np.sin(phi),startingZcoords)
 
+            sol = root(energyAlongPhi,0.5*np.ones(startingZcoords.size))
+            r0 = sol.x #list of radius vector moduli corresponding to points lying on the FS
 
-            r0 = fsolve(energyAlongPhi,0.5,factor=0.1,maxfev=500000)[0]
-            return np.array([r0*np.cos(phi),r0*np.sin(phi),startingZcoord])
+            return np.transpose(np.array([r0*np.cos(phi),r0*np.sin(phi),startingZcoords]))
 
         #create startingpoints by iterating getpoints() over self.planeZcoords
         for phi in philist:
-            if parallelised:
-                startingpointslist = Parallel(n_jobs=int(cpus))(delayed(getpoint)(startingZcoord,phi) for startingZcoord in self.planeZcoords)
-            else:
-                startingpointslist = [getpoint(startingZcoord,phi) for startingZcoord in self.planeZcoords]
-
-            startingpointsarray = np.array(startingpointslist)
+            startingpointsarray = getpoints(self.planeZcoords,phi)
 
             self.initialcurvesList.append(np.delete(startingpointsarray,-1,axis=0))
 
@@ -138,7 +136,7 @@ class InterpolatedCurves:
             """
             planeequation(kvector) = 0 is the equation of the plane defined by normalvector and pointonplane
             """
-            return dispersion.dot(kvector,normalvector) - dispersion.dot(pointonplane,normalvector)
+            return np.dot(kvector,normalvector) - np.dot(pointonplane,normalvector)
 
         def binaryfindintersection(upperbound,lowerbound,planeequation,interpolatedcurve):
             """
@@ -154,24 +152,16 @@ class InterpolatedCurves:
             upperz = upperbound[2]
             lowerz = lowerbound[2]
 
-            for i in range(10):
-                midz = (upperz+lowerz)/2
+            zcoords = np.linspace(lowerz,upperz,1000) #array of z coordinates between upperz and lowerz to be used for finding a solution
 
-                upperpoint = [extendedinterpolatedcurve(upperz)[0],extendedinterpolatedcurve(upperz)[1],upperz]
-                lowerpoint = [extendedinterpolatedcurve(lowerz)[0],extendedinterpolatedcurve(lowerz)[1],lowerz]
-                midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
+            interpolatedpoints = np.transpose(np.vstack((extendedinterpolatedcurve(zcoords),zcoords)))  #array of three vectors lying on the curve between upperz and lowerz, along whcih to find solutions
+            intersectionindices = [np.nonzero(np.diff(np.sign(planeequation(interpolatedpoints))))] #coordinate where planequation flips sign
+            
+            intersectionpoint = np.reshape(interpolatedpoints[intersectionindices],(3))
 
-                if planeequation(upperpoint)*planeequation(midpoint)<0: #intersection is between upperpoint and midpoint
-                    lowerz = midz
-                elif planeequation(lowerpoint)*planeequation(midpoint)<0: #intersection is between lowerpoint and midpoint
-                    upperz = midz
-                #else:
-                #    raise Exception(("Intersection not found between upperbound and lowerbound"))
+            return intersectionpoint
 
-            midpoint = [extendedinterpolatedcurve(midz)[0],extendedinterpolatedcurve(midz)[1],midz]
-            return midpoint
-
-        intersectionindices = [np.nonzero(np.diff(np.sign(list(map(planeequation,curve))))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
+        intersectionindices = [np.nonzero(np.diff(np.sign(planeequation(curve)))) for curve in self.extendedcurvesList] #contains a list of indices for each set of points denoting intersections with the plane
         intersectionpoints = []
 
         for (curve_id,curve) in enumerate(self.extendedcurvesList):
@@ -215,6 +205,16 @@ class NewOrbits:
             print("initialcurvesList not extended for interpolatedcurves, extending with nzones =1")
             self.interpolatedcurves.extendedZoneMultiply()
 
+        #the force v \cross B term but now with fixed B
+        RHS_numeric = self.dispersion.RHS_numeric
+
+        @cfunc(lsoda_sig)
+        def RHS_withB(t,k,dk,B ):
+            [dk[0],dk[1],dk[2]] = RHS_numeric([k[0],k[1],k[2]],[B[0],B[1],B[2]])
+
+        self.RHS_withB_address = RHS_withB.address
+
+
 
     def createOrbitsInPlane(self,B,pointonplane,termination_resolution,sampletimes,mult_factor):
         """
@@ -227,7 +227,6 @@ class NewOrbits:
 
         Creates all possible orbits lying in the plane defined by B and pointonplane
         """
-        B_normalized = np.array(B)/dispersion.norm(B)
 
         #find starting points lying on plane and also time it
         starttime = time()
@@ -235,35 +234,27 @@ class NewOrbits:
         endtime = time()
         self.timespentfindingpoints += (endtime-starttime)
 
-        #the force v \cross B term but now with fixed B
-        def RHS_withB(t,k):
-            return self.dispersion.RHS_numeric(k,mult_factor*B_normalized)
-
-        #timestamps on which to start and end integration (in principle, the endpoint will not be required)
-        t_span = (sampletimes[0],sampletimes[-1])
-
         #list of orbits in plane
         orbitsinplane = []
 
         while initialpointslist.size > 0:
-            initial = initialpointslist[0]
+            initial = np.array(initialpointslist[0])
 
-            def event_fun(t,k):
-                return  dispersion.norm(np.array(k)-np.array(initial)) - termination_resolution
+            #starttime = time()
+            solution,success = lsoda(self.RHS_withB_address, initial, sampletimes,data=B*mult_factor,rtol=1e-7,atol=1e-8)
+            #endtime = time()
+            orbit = (solution)
 
-            event_fun.terminal = True # make event function terminal -- this is the terminating event
-            event_fun.direction = -1 #event function only triggered when it is decreasing
-
-            solution = solve_ivp(RHS_withB, t_span, initial, t_eval = sampletimes, dense_output=True, events=event_fun,method='LSODA',rtol=1e-7,atol=1e-8)
-            orbit = np.transpose(solution.y)
-
+            #print("Time taken to create orbits = ",endtime - starttime)
+            
             #now check if any other elements of initialpointslist appear in orbit
-            elementstobedeleted= []
 
-            for orbitpoint in orbit:
-                for id,initialpoint in enumerate(initialpointslist):
-                    if dispersion.norm(orbitpoint-initialpoint) < termination_resolution: #this means that initialpoint lies on orbit
-                        elementstobedeleted.append(id) #add index of initialpoint to the array of positions to be deleted
+            elementstobedeleted = []
+            for id,initialpoint in enumerate(initialpointslist):
+                normsarray = np.linalg.norm(orbit - initialpoint,axis=1)
+                closenessarray = np.isclose(normsarray,0,atol=termination_resolution)
+                if np.any(closenessarray):
+                    elementstobedeleted.append(id) 
 
             initialpointslist = np.delete(initialpointslist,elementstobedeleted,axis=0)#deletes initial point elements that lie on the current orbit
 
@@ -272,7 +263,7 @@ class NewOrbits:
         #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
 
-    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,400,100000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -284,12 +275,12 @@ class NewOrbits:
         """
         self.orbits = []
         self.termination_resolution = termination_resolution
+        self.B = B
+        self.B_normalized = np.array(B)/dispersion.norm(B)
 
         for point in self.interpolatedcurves.planeAnchors: #creates orbits for each planeanchor and then appends it to self.orbits
-            listoforbitsinplane = self.createOrbitsInPlane(B,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
+            listoforbitsinplane = self.createOrbitsInPlane(self.B_normalized,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
             for orbit in listoforbitsinplane: self.orbits.append(orbit)
-
-        self.B = B
 
     def createOrbitsEQS(self,integration_resolution=0.05):
         """
@@ -305,17 +296,23 @@ class NewOrbits:
             """
             This function creates an equally spaced orbit out of the input orbit, and appends it to self.orbitsEQS if it has mroe than three points
             """
-            #add initial point to equally spaced orbit
-            startingpoint = orbit[0]
-            currentpoint  = startingpoint
-            singleorbitEQS = np.array([currentpoint],ndmin=2)
+            #Find distances of points from initial point to tell where orbit closes
+            diffvectors = orbit - np.outer(np.ones(orbit.shape[0]),orbit[0])
+            diffvectorsnorm = np.linalg.norm(diffvectors,axis=1) #array of distances from initial point
+            d_diffvectorsnorm = np.diff(diffvectorsnorm,append=0) #derivative of diffvectorsnorm. Value of 0 appended to keep length same as diffvectorsnorm
 
-            #keep iterating over points in the orbit
-            for id,point in enumerate(orbit):
-                #if this point is sufficiently far away from previous point, add point to list
-                if dispersion.norm(currentpoint - point) > integration_resolution:
-                    currentpoint = point
-                    singleorbitEQS = np.append(singleorbitEQS,np.array([currentpoint],ndmin=2),axis=0)
+            #orbit is close to completion when 1.diffvectorsnorm is close to zero 2.the derivative of diffvectorssnorm is negative 
+            whereclosetozero = np.isclose(diffvectorsnorm,0,atol=integration_resolution)
+            wherenegativederivative = d_diffvectorsnorm < 0
+            orbitcompletionindices = np.arange(diffvectorsnorm.size)[np.logical_and(whereclosetozero,wherenegativederivative)] #set of indices where orbit closes
+            firstindexofcompletion = orbitcompletionindices[0] #first index where orbit closes
+            firstorbit = orbit[:firstindexofcompletion,:] #array elements corresponding to the first completed orbit
+
+            #plt.plot(firstorbit[:,0],ls ="",marker="o",ms = 1)
+            shiftedfirstorbit = np.roll(firstorbit,-1,axis=0)
+            cumnormslist = np.cumsum(np.linalg.norm(shiftedfirstorbit-firstorbit,axis=1))
+            equallyspacesindices = np.nonzero(np.diff(np.sign(np.sin(cumnormslist*np.pi/integration_resolution))))
+            singleorbitEQS = firstorbit[equallyspacesindices]
 
             #if orbits1EQS has less than three points, we discard the orbit as numerical path derivatives won't be well defined
             if not singleorbitEQS.shape[0] < 3:

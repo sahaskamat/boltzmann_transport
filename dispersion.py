@@ -81,7 +81,7 @@ class LSCOdispersion:
         self.RHS_numeric = njit(lambda k,B : force_numeric(k[0],k[1],k[2],B[0],B[1],B[2])[0])
 
         #first convert symbolic dispersion to numeric function
-        self.en_numeric = njit(symp.lambdify([kx,ky,kz],en))
+        self.en_numeric = (symp.lambdify([kx,ky,kz],en,"numpy"))
 
         #define functions used in the A matrix calculations
         graden_numeric  = (symp.lambdify([kx,ky,kz],graden,"numpy"))

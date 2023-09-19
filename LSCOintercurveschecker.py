@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(80)
+    initialpointsInstance.createPlaneAnchors(200)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -36,7 +36,6 @@ def main():
     theta = np.deg2rad(80)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
-    intersections = initialpointsInstance.findintersections(B,[0,0,0])
 
     #plottingintersections
     #ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
@@ -45,6 +44,10 @@ def main():
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
+    listoforbits = orbitsinstance.orbitsEQS
+    plt.show()    
+    #orbitsinstance.orbitdiagnosticplot()
+    """
     listoforbits = orbitsinstance.orbitsEQS
     endtime = time()
     print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
@@ -70,13 +73,12 @@ def main():
     endtime = time()
     print(f"Time taken to calculate conductivity = {endtime - starttime}")
 
-    #orbitsinstance.orbitdiagnosticplot()
+    orbitsinstance.orbitdiagnosticplot()
 
     #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
-    #plt.show()
+    #plt.show()    
+"""
 
 cProfile.run('main()',filename='stats.prof')
-
-with open('outputstats.txt', 'w') as stream:
-   stats = pstats.Stats('stats.prof', stream=stream).sort_stats('cumtime')
-   stats.print_stats()
+#main()
+#plt.show()
