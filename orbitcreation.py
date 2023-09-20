@@ -305,6 +305,10 @@ class NewOrbits:
             whereclosetozero = np.isclose(diffvectorsnorm,0,atol=integration_resolution)
             wherenegativederivative = d_diffvectorsnorm < 0
             orbitcompletionindices = np.arange(diffvectorsnorm.size)[np.logical_and(whereclosetozero,wherenegativederivative)] #set of indices where orbit closes
+
+            if orbitcompletionindices.size == 0:
+                raise Exception("Some orbits did not close! Increase integration time or mult_factor, and try again")
+
             firstindexofcompletion = orbitcompletionindices[0] #first index where orbit closes
             firstorbit = orbit[:firstindexofcompletion,:] #array elements corresponding to the first completed orbit
 
