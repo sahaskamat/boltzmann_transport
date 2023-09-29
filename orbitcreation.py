@@ -216,7 +216,7 @@ class NewOrbits:
 
 
 
-    def createOrbitsInPlane(self,B,pointonplane,termination_resolution,sampletimes,mult_factor):
+    def createOrbitsInPlane(self,B,pointonplane,termination_resolution,sampletimes,mult_factor,rtol,atol):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
@@ -241,7 +241,7 @@ class NewOrbits:
             initial = np.array(initialpointslist[0])
 
             #starttime = time()
-            solution,success = lsoda(self.RHS_withB_address, initial, sampletimes,data=B*mult_factor,rtol=1e-7,atol=1e-8)
+            solution,success = lsoda(self.RHS_withB_address, initial, sampletimes,data=B*mult_factor,rtol=rtol,atol=atol)
             #endtime = time()
             orbit = (solution)
 
@@ -263,12 +263,12 @@ class NewOrbits:
         #print("Number of orbits created in plane:",len(orbitsinplane)) diagnostic to make sure all extra orbits are created
         return orbitsinplane
 
-    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1):
+    def createOrbits(self,B,termination_resolution = 0.05,sampletimes = np.linspace(0,4,10000),mult_factor=1,rtol=1e-7,atol=1e-8):
         """
         Inputs:
         B (3-vector specifying direction of magnetic field)
         termination_resolution (radius in which integration terminates, default value 0.05)
-        sampletimes (times at which to sample solution)
+        sampletimes (times at which to sample solution) (default value is value for LSCO at critial doping)
         mult_factor (multiplication factor for B during integration: larger means faster integration, but greater than 10 and integration breaks ihavenoideawhy)
 
         Creates all possible orbits lying on planes defined by B and self.interpolatedcurves.planeAnchors
@@ -279,7 +279,7 @@ class NewOrbits:
         self.B_normalized = np.array(B)/dispersion.norm(B)
 
         for point in self.interpolatedcurves.planeAnchors: #creates orbits for each planeanchor and then appends it to self.orbits
-            listoforbitsinplane = self.createOrbitsInPlane(self.B_normalized,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor)
+            listoforbitsinplane = self.createOrbitsInPlane(self.B_normalized,point,termination_resolution = termination_resolution,sampletimes = sampletimes,mult_factor=mult_factor,rtol=rtol,atol=atol)
             for orbit in listoforbitsinplane: self.orbits.append(orbit)
 
     def createOrbitsEQS(self,integration_resolution=0.05):
