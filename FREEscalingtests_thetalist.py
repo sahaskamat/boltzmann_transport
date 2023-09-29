@@ -7,7 +7,7 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,75,20)
+thetalist = np.linspace(0,75,40)
 phi = 0
 
 phi_rad = np.deg2rad(phi)
@@ -16,7 +16,7 @@ initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(200)
+initialpointsInstance.createPlaneAnchors(20)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -25,7 +25,7 @@ def getsigma(theta):
     #Bz stays constant and field angle changes
     B = [(1*np.sin(np.deg2rad(theta))*np.cos(phi_rad))/(1*np.cos(np.deg2rad(theta))),(1*np.sin(np.deg2rad(theta))*np.sin(phi_rad))/(1*np.cos(np.deg2rad(theta))),1]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.1,mult_factor=40,sampletimes= np.linspace(0,4,100000),rtol=1e-10,atol=1e-11)
+    orbitsinstance.createOrbits(B,termination_resolution=0.1,mult_factor=40,sampletimes= np.linspace(0,1,100000),rtol=1e-11,atol=1e-12)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.1)
     endtime = time()
 
@@ -44,7 +44,7 @@ sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 endtime = time()
 print("Time taken to create orbits:",endtime-starttime)
 
-rhoxylist= [rho[0,1]*10e-5 for rho in rholist]
+rhoxylist= [rho[0,0]*10e-5 for rho in rholist]
 
 endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
