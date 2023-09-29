@@ -138,7 +138,7 @@ class FREEdispersion:
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
-        en = en = 3.8099820794*(kx**2 + ky**2 + 0.0000001*symp.cos(kz*self.c)) - self.mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
+        en = en = 3.8099820794*(kx**2 + ky**2 + 0.000001*symp.cos(kz*(self.c/2))) - self.mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
         graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
         #############################################################################################
@@ -179,7 +179,7 @@ class FREEdispersion:
         #scattering rate(inverse scattering time)
         #units of tau are ps, invtau are ps-1
 
-        return 1/100
+        return np.ones(np.shape(p)[1])*(1/100)
 
     @staticmethod
     def dkperp(B,dkz,dedk):
