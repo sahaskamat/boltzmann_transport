@@ -12,11 +12,11 @@ phi = 0
 
 phi_rad = np.deg2rad(phi)
 dispersionInstance = dispersion.FREEdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,False)
+initialpointsInstance = orbitcreation.InterpolatedCurves(400,dispersionInstance,False)
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
-initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(20)
+initialpointsInstance.extendedZoneMultiply(3)
+initialpointsInstance.createPlaneAnchors(200)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -25,8 +25,8 @@ def getsigma(theta):
     #Bz stays constant and field angle changes
     B = [(1*np.sin(np.deg2rad(theta))*np.cos(phi_rad))/(1*np.cos(np.deg2rad(theta))),(1*np.sin(np.deg2rad(theta))*np.sin(phi_rad))/(1*np.cos(np.deg2rad(theta))),1]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.1,mult_factor=40,sampletimes= np.linspace(0,1,100000),rtol=1e-11,atol=1e-12)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.1)
+    orbitsinstance.createOrbits(B,termination_resolution=0.05,mult_factor=40,sampletimes= np.linspace(0,1,100000),rtol=1e-11,atol=1e-12)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
     endtime = time()
 
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -44,7 +44,7 @@ sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 endtime = time()
 print("Time taken to create orbits:",endtime-starttime)
 
-rhoxylist= [rho[0,0]*10e-5 for rho in rholist]
+rhoxylist= [rho[0,1]*10e-5 for rho in rholist]
 
 endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
