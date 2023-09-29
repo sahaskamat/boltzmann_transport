@@ -179,7 +179,7 @@ class FREEdispersion:
         #scattering rate(inverse scattering time)
         #units of tau are ps, invtau are ps-1
 
-        return np.ones(np.shape(p)[1])*(1/100)
+        return np.ones(np.shape(p)[1])*(1/1000)
 
     @staticmethod
     def dkperp(B,dkz,dedk):
