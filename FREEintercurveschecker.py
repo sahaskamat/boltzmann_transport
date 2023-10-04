@@ -19,7 +19,7 @@ def main():
 
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
-    initialpointsInstance.extendedZoneMultiply(3)
+    initialpointsInstance.extendedZoneMultiply(0)
     initialpointsInstance.createPlaneAnchors(10)
     #initialpointsInstance.plotpoints()
     endtime = time()
@@ -33,7 +33,7 @@ def main():
     #for curve in initialpointsInstance.extendedcurvesList:
     #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-    theta = np.deg2rad(80)
+    theta = np.deg2rad(0)
     phi = np.deg2rad(0)
     B = [np.sin(theta)/np.cos(theta),0,1]
 
