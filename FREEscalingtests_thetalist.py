@@ -23,7 +23,7 @@ print(f"Time taken to create initialcurves = {endtime - starttime}")
 starttime = time()
 def getsigma(theta):
     #Bz stays constant and field angle changes
-    B = [(0.01*np.sin(np.deg2rad(theta))*np.cos(phi_rad))/(1*np.cos(np.deg2rad(theta))),(0.01*np.sin(np.deg2rad(theta))*np.sin(phi_rad))/(1*np.cos(np.deg2rad(theta))),0.01]
+    B = [(1*np.sin(np.deg2rad(theta))*np.cos(phi_rad))/(1*np.cos(np.deg2rad(theta))),(1*np.sin(np.deg2rad(theta))*np.sin(phi_rad))/(1*np.cos(np.deg2rad(theta))),1]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.05,mult_factor=40,sampletimes= np.linspace(0,1,100000),rtol=1e-11,atol=1e-12)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
