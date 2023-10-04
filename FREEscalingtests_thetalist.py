@@ -44,10 +44,16 @@ sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
 endtime = time()
 print("Time taken to create orbits:",endtime-starttime)
 
-rhoxylist= [rho[0,0]*10e-5 for rho in rholist]
+rhoxxlist= [rho[0,0]*10e-5 for rho in rholist]
+rhoxylist= [rho[0,1]*10e-5 for rho in rholist]
 
 endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
+
+plt.scatter(thetalist,rhoxxlist)
+plt.ylabel(r"$\rho_{xy}$ ($m\Omega$ cm )")
+plt.xlabel(r'$\theta$')
+plt.show()
 
 plt.scatter(thetalist,rhoxylist)
 plt.ylabel(r"$\rho_{xy}$ ($m\Omega$ cm )")
