@@ -9,8 +9,9 @@ from time import time
 starttime_global = time()
 thetalist = np.linspace(0,75,40)
 phi = 0
-
 phi_rad = np.deg2rad(phi)
+Blist =  [(1*np.sin(np.deg2rad(thetalist))*np.cos(phi_rad)),(1*np.sin(np.deg2rad(thetalist))*np.sin(phi_rad)),(1*np.cos(np.deg2rad(thetalist)))]
+
 dispersionInstance = dispersion.FREEdispersion()
 initialpointsInstance = orbitcreation.InterpolatedCurves(400,dispersionInstance,False)
 starttime = time()
@@ -23,7 +24,7 @@ print(f"Time taken to create initialcurves = {endtime - starttime}")
 starttime = time()
 def getsigma(theta):
     #Bz stays constant and field angle changes
-    B = [(1*np.sin(np.deg2rad(theta))*np.cos(phi_rad))/(1*np.cos(np.deg2rad(theta))),(1*np.sin(np.deg2rad(theta))*np.sin(phi_rad))/(1*np.cos(np.deg2rad(theta))),1]
+    B = [(1*np.sin(np.deg2rad(theta))*np.cos(phi_rad)),(1*np.sin(np.deg2rad(theta))*np.sin(phi_rad)),(1*np.cos(np.deg2rad(theta)))]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
     orbitsinstance.createOrbits(B,termination_resolution=0.05,mult_factor=40,sampletimes= np.linspace(0,1,100000),rtol=1e-11,atol=1e-12)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
@@ -46,6 +47,7 @@ print("Time taken to create orbits:",endtime-starttime)
 
 rhoxxlist= [rho[0,0]*10e-5 for rho in rholist]
 rhoxylist= [rho[0,1]*10e-5 for rho in rholist]
+Rhlist = np.array([rho[0,1]*10e-5 for rho in rholist])/np.array(Blist[3,:])
 
 endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
@@ -56,7 +58,7 @@ plt.xlabel(r'$\theta$')
 plt.tight_layout()
 plt.show()
 
-plt.scatter(thetalist,rhoxylist)
+plt.scatter(thetalist,Rhlist)
 plt.ylabel(r"$\rho_{xy}$ ($m\Omega$ cm )")
 plt.xlabel(r'$\theta$')
 plt.tight_layout()
