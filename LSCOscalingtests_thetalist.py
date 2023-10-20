@@ -49,7 +49,9 @@ rhoxylist= [rho[2,2]*10e-5 for rho in rholist]
 endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
 
-plt.scatter(thetalist,rhoxylist)
+np.savetxt("rhoxyvst.dat",np.transpose([thetalist,rhoxylist]))
+
+plt.plot(thetalist,rhoxylist,ls="",marker="o",ms=2)
 plt.ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
 plt.xlabel(r'$\theta$')
 plt.show()
