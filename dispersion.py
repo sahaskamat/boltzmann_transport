@@ -29,13 +29,16 @@ def norm(p):
 class LSCOdispersion:
     """
     Inputs:
+    T (energy scale of tight binding model)
+    T1,T11,Tz (multiply by T to get unitfull tight binding parameters)
     mumultvalue (multiplicative factor that sets doping and hence chemical potential)
-    mumultvalue = 0.8243(critical point) or 1.15(far from lifshits singularity)
 
+    mumultvalue = 0.8243(critical point) or 1.15(far from lifshits singularity)
     Class represents LSCO dispersion (remember to set doublefermisurface = True!)
     Contains symbolic calculations that are lambdified to generate numeric values of important dispersion parameters
+    Default params are values from fitting in Gael's paper
     """
-    def __init__(self,mumultvalue=0.8243):
+    def __init__(self,T= 160e-3,T1multvalue=-0.1364,T11multvalue=0.0682,Tzmultvalue=0.0651,mumultvalue=0.8243):
 
         #############################################################################################
         #LSCO specific functions are below
@@ -48,9 +51,9 @@ class LSCOdispersion:
 
         #hopping parameters in eV from Yawen and Gael's paper:
         T = (160)*(10**(-3))
-        T1 = -0.1364*T
-        T11 = 0.0682*T
-        Tz = 0.0651*T
+        T1 = T1multvalue*T
+        T11 = T11multvalue*T
+        Tz = Tzmultvalue*T
         self.mu = -mumultvalue*T #this is the critical point value
         #mu = -1.15*T #this is a value far from the lifshits singularity (and hence the fermi surface does not cross the van hove points)
         #now we symbolically define the dispersion
