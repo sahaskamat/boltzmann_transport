@@ -76,4 +76,6 @@ def main():
 
     o3d.visualization.draw_geometries([mesh], mesh_show_back_face=True)
 
+    o3d.io.write_triangle_mesh("lsco.stl",mesh,print_progress=True)
+
 main()
