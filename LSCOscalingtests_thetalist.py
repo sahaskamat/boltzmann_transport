@@ -7,7 +7,7 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,80,40)
+thetalist = np.linspace(0,80,12)
 phi = 0
 
 phi_rad = np.deg2rad(phi)

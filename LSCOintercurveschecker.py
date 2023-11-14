@@ -19,8 +19,8 @@ def main():
 
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
-    initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(200)
+    initialpointsInstance.extendedZoneMultiply(0)
+    initialpointsInstance.createPlaneAnchors(20)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -33,7 +33,7 @@ def main():
     #for curve in initialpointsInstance.extendedcurvesList:
     #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-    theta = np.deg2rad(80)
+    theta = np.deg2rad(0)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
 
@@ -45,8 +45,9 @@ def main():
     orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
     orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
     listoforbits = orbitsinstance.orbitsEQS
-    plt.show()    
-    #orbitsinstance.orbitdiagnosticplot()
+    orbitsinstance.orbitdiagnosticplot()
+
+    plt.show()
     """
     listoforbits = orbitsinstance.orbitsEQS
     endtime = time()
