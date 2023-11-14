@@ -42,44 +42,16 @@ def main():
 
     starttime = time()
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
-    listoforbits = orbitsinstance.orbitsEQS
-    orbitsinstance.orbitdiagnosticplot()
+    orbitsinstance.createOrbits(B,termination_resolution=0.05,mult_factor=10)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
 
+    #creates the point cloud for 3d printing
+    pointcloud = np.concatenate(orbitsinstance.orbitsEQS)
+    print(pointcloud)
+
+    ax = plt.figure().add_subplot(projection='3d')
+
+    ax.scatter(pointcloud[:,0],pointcloud[:,1],pointcloud[:,2])
     plt.show()
-    """
-    listoforbits = orbitsinstance.orbitsEQS
-    endtime = time()
-    print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
 
-    starttime = time()
-    conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
-    endtime = time()
-    print(f"Time taken to create conductivityInstance =  {endtime - starttime}")
-
-    starttime = time()
-    conductivityInstance.createAMatrix()
-    print(conductivityInstance.A.shape)
-    endtime = time()
-    print(f"Time taken to create Amatrix =  {endtime - starttime}")
-
-    starttime = time()
-    conductivityInstance.createAlpha()
-    endtime = time()
-    print(f"Time taken to create Alpha =  {endtime - starttime}")
-
-    starttime = time()
-    conductivityInstance.createSigma()
-    endtime = time()
-    print(f"Time taken to calculate conductivity = {endtime - starttime}")
-
-    orbitsinstance.orbitdiagnosticplot()
-
-    #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
-    #plt.show()    
-"""
-
-cProfile.run('main()',filename='stats.prof')
-#main()
-#plt.show()
+main()
