@@ -91,18 +91,18 @@ class Conductivity:
 
         #create sparese Amatrix:
         self.A = sp.sparse.csr_array((Adata,(Aposition_i,Aposition_j)),shape = (self.n,self.n))
-        #adding the scattering in terms for isotropic scattering:
-        #self.A = self.A + np.ones([n,n])*(-self.dispersionInstance.invtau([0,0,0])/n)
-        #i=0
-        #for orbit in self.orbitsInstance.orbitsEQS:
-        #    m = len(orbit) #m x m is the size of the submatrix for this orbit
-        #    for state in orbit:
-        #        for j in range(n):
-        #            self.A[i,j] -= self.dispersionInstance.invtau(state)/n
-        #        i +=1
 
-       # Skipping matrix inversion in favor of solve
-       # self.Ainv = np.matrix(np.linalg.inv(self.A))
+        #now add in scattering in terms coming from forward scattering
+
+        #first create matrix whose {i,j} element is {k_i,k_j}, which will be an input to the scattering-in formula
+        plist = np.concatenate(self.orbitsEQS) #list of all momentum vectors in correct order
+
+        indices = np.indices([self.n,self.n]) #list of indices {i,j} to be extracted from plist  
+
+        pi_minus_pj = (plist[indices])[0] - (plist[indices])[1] #the i,jth element of this matrix is p_i - p_j (directly features into the scattering in matrix)
+         
+
+
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
