@@ -23,7 +23,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(0)
-    initialpointsInstance.createPlaneAnchors(200)
+    initialpointsInstance.createPlaneAnchors(15)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -45,8 +45,9 @@ def main():
 
     starttime = time()
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.005,mult_factor=10)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.005)
+    orbitsinstance.createOrbits(B,termination_resolution=0.05,mult_factor=10)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.05)
+    orbitsinstance.orbitdiagnosticplot()
 
     #creates the point cloud for 3d printing
     pointcloud = np.concatenate(orbitsinstance.orbitsEQS)
@@ -67,7 +68,7 @@ def main():
     o3d.visualization.draw_geometries([pcl])
 
     #creates a mesh from pointcloud object
-    alpha = 0.015
+    alpha = 0.15
     print(f"alpha={alpha:.3f}")
 
     tetra_mesh, pt_map = o3d.geometry.TetraMesh.create_from_point_cloud(pcl)
