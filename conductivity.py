@@ -95,7 +95,7 @@ class Conductivity:
         #now add in scattering in terms coming from forward scattering
 
         #first create matrix whose {i,j} element is {k_i,k_j}, which will be an input to the scattering-in formula
-        plist = np.concatenate(self.orbitsEQS) #list of all momentum vectors in correct order
+        plist = np.concatenate(self.orbitsInstance.orbitsEQS) #list of all momentum vectors in correct order
 
         indices = np.indices([self.n,self.n]) #list of indices {i,j} to be extracted from plist  
 
