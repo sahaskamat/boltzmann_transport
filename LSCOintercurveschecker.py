@@ -47,7 +47,6 @@ def main():
     listoforbits = orbitsinstance.orbitsEQS
     plt.show()    
     #orbitsinstance.orbitdiagnosticplot()
-    """
     listoforbits = orbitsinstance.orbitsEQS
     endtime = time()
     print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
@@ -73,11 +72,10 @@ def main():
     endtime = time()
     print(f"Time taken to calculate conductivity = {endtime - starttime}")
 
-    orbitsinstance.orbitdiagnosticplot()
+    #orbitsinstance.orbitdiagnosticplot()
 
     #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
     #plt.show()    
-"""
 
 cProfile.run('main()',filename='stats.prof')
 #main()
