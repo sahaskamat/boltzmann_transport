@@ -7,7 +7,7 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,80,20)
+thetalist = np.linspace(0,80,200)
 phi = 0
 
 phi_rad = np.deg2rad(phi)
@@ -16,7 +16,7 @@ initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
 initialpointsInstance.extendedZoneMultiply(5)
-initialpointsInstance.createPlaneAnchors(300)
+initialpointsInstance.createPlaneAnchors(50)
 endtime = time()
 print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -24,8 +24,8 @@ starttime = time()
 def getsigma(theta):
     B = [45*np.sin(np.deg2rad(theta))*np.cos(phi_rad),45*np.sin(np.deg2rad(theta))*np.sin(phi_rad),45*np.cos(np.deg2rad(theta))]
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=15)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
+    orbitsinstance.createOrbits(B,termination_resolution=0.07,mult_factor=15)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.07)
     endtime = time()
     #print(f'orbitcreation completed for {theta} degrees')
     #if theta>=60: orbitsinstance.plotOrbitsEQS() #enable plotting for diagnostic purposes
