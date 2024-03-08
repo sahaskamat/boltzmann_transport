@@ -51,24 +51,23 @@ class Conductivity:
         #i is an iterator that iterates over the hilbert space
         i=0
 
+        #create A matrix to populate with numbers:
+        self.A = np.zeros((self.n,self.n))
+
         for orbit in self.orbitsInstance.orbitsEQS:
             m = len(orbit) #m x m is the size of the submatrix for this orbit
 
             for state_id,state in enumerate(orbit):
                 #diagonal term coming from scattering out
-                Adata.append(invtaulist[i])
-                Aposition_i.append(i)
-                Aposition_j.append(i)
+                self.A[i,i] = invtaulist[i]
 
                 #off diagonal terms that simulate the derivative term from the boltzmann equation
                 i_next = ((i + 1) - submatrixindex)%m + submatrixindex
                 i_prev = ((i - 1) - submatrixindex)%m + submatrixindex
  
                 graddata = graddatalist[i]
-                    
-                Adata.append(graddata)
-                Aposition_i.append(i)
-                Aposition_j.append(i_next)
+
+                self.A[i,i_next] = graddata
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
@@ -77,9 +76,7 @@ class Conductivity:
                 #print(deltap(orbit1[i_next-submatrixindex],orbit1[i_prev - submatrixindex]))
                 #print(state)
 
-                Adata.append(-graddata)
-                Aposition_i.append(i)
-                Aposition_j.append(i_prev)
+                self.A[i,i_prev] = -graddata
 
                 #TEST BY CHANGING DIFFERENTIATION METHOD:
                 #self.A[i,i] += -self.A[i,i_next]
@@ -88,9 +85,6 @@ class Conductivity:
 
             submatrixindex += len(orbit)
             submatrixindexlist.append(submatrixindex)
-
-        #create sparese Amatrix:
-        self.A = sp.sparse.csr_array((Adata,(Aposition_i,Aposition_j)),shape = (self.n,self.n))
 
         #now add in scattering in terms coming from forward scattering
 
@@ -110,7 +104,7 @@ class Conductivity:
 
         #multiply Ainv with the ath component of dedk to obtain alpha
         #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = sp.sparse.linalg.spsolve(self.A,self.dedk_list)
+        self.alpha = sp.linalg.solve(self.A,self.dedk_list)
 
     def createSigma(self):
         #this creates the matrix sigma_mu_nu
