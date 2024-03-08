@@ -50,10 +50,9 @@ def rhozzvstheta(theta_num,planeanchor_num,int_resolution):
         conductivityInstance.createSigma()
 
         #orbitsinstance.orbitdiagnosticplot()
-        #print(f'matrixinversion performed for {theta}')
-        print(f"Theta={theta},Calculated total area: {conductivityInstance.areasum}, number of orbits used {len(conductivityInstance.orbitsInstance.orbitsEQS)}")
+        if theta==80: print(f'matrixinversion performed for {theta}, A matrix dimension {conductivityInstance.A.shape}')
+        #print(f"Theta={theta},Calculated total area: {conductivityInstance.areasum}, number of orbits used {len(conductivityInstance.orbitsInstance.orbitsEQS)}")
         return conductivityInstance.sigma,conductivityInstance.areasum
-
 
     sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
     endtime = time()
@@ -86,13 +85,13 @@ if __name__ == "__main__":
     fig3,axes3 = plt.subplots()
 
     #first do a low res, many point scan to check for devations
-    rhozzlist,arealist,thetalist = rhozzvstheta(200,50,0.07)
+    rhozzlist,arealist,thetalist = rhozzvstheta(500,50,0.07)
     axes1.plot(thetalist,rhozzlist,ls="",marker="o",ms=2,label="Res 1")
     axes2.plot(thetalist,arealist,ls="",marker="o",ms=2,label="Res 1")
     axes3.plot(thetalist,np.array(rhozzlist)*np.array(arealist),ls="",marker="o",ms=2,label="Res 1")
 
     #decrease res and keep points same
-    rhozzlist,arealist,thetalist = rhozzvstheta(200,30,0.1)
+    rhozzlist,arealist,thetalist = rhozzvstheta(500,30,0.1)
     axes1.plot(thetalist,rhozzlist,ls="",marker="o",ms=2,label="Res 2")
     axes2.plot(thetalist,arealist,ls="",marker="o",ms=2,label="Res 2")
     axes3.plot(thetalist,np.array(rhozzlist)*np.array(arealist),ls="",marker="o",ms=2,label="Res 2")
