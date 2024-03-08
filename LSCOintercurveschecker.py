@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(200)
+    initialpointsInstance.createPlaneAnchors(30)
     #initialpointsInstance.plotpoints()
     endtime = time()
 
@@ -42,8 +42,8 @@ def main():
 
     starttime = time()
     orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.01,mult_factor=10)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.01)
+    orbitsinstance.createOrbits(B,termination_resolution=0.1,mult_factor=10)
+    orbitsinstance.createOrbitsEQS(integration_resolution=0.1)
     listoforbits = orbitsinstance.orbitsEQS
     plt.show()    
     #orbitsinstance.orbitdiagnosticplot()
