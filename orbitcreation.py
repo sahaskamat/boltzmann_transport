@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from time import time
 import dispersion
 from numba import njit,cfunc
-from numbalsoda import lsoda_sig, lsoda
 
 ########################
 # Module to find number of CPUSnumbalsoda
@@ -38,10 +37,10 @@ class InterpolatedCurves:
     This class replaces the older InitialPoints class, and is compatible with the Conductivity class out of the box
     """
 
-    def __init__(self,n_points,n_cuts,dispersion,doublefermisurface):
+    def __init__(self,res_z,res_xy,dispersion,doublefermisurface):
         self.dispersion = dispersion
-        self.n_cuts = n_cuts
-        self.n_points = n_points
+        self.n_cuts = res_xy
+        self.n_points = res_z
 
         if not isinstance(doublefermisurface,bool): #check if doublefermisurface is correctly specified
             raise Exception("Argument doublefermisurface is not a boolean")
@@ -49,10 +48,10 @@ class InterpolatedCurves:
         self.doublefermisurface = doublefermisurface
         self.c = self.dispersion.c/(1+int(self.doublefermisurface)) #this makes c = dispersion.c/2 if doublefermisurface is True
 
-        self.planeZcoords = np.linspace(-(np.pi)/self.c,(np.pi)/self.c,n_points+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
+        self.planeZcoords = np.linspace(-(np.pi)/self.c,(np.pi)/self.c,self.n_points+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
         self.dkz = np.array([0,0,self.planeZcoords[1] - self.planeZcoords[0]]) #vector connecting two planes used for area calculations in conductivity
 
-        self.initialcurvesList = np.zeros((n_points,n_cuts,3)) #list of list of initialpoints lying on the fermi surface. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
+        self.initialcurvesList = np.zeros((self.n_points,self.n_cuts,3)) #list of list of initialpoints lying on the fermi surface. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
 
     def solveforpoints(self,parallelised=False):
         """

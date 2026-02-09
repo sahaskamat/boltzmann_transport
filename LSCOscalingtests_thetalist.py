@@ -7,12 +7,15 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,90,25)
-phi = 30
+thetalist = np.linspace(0,180,50)
+phi = 0
+
+res_z = 20
+res_xy = 150
 
 phi_rad = np.deg2rad(phi)
 dispersionInstance = dispersion.LSCOdispersion()
-initialpointsInstance = orbitcreation.InterpolatedCurves(50,100,dispersionInstance,True)
+initialpointsInstance = orbitcreation.InterpolatedCurves(res_z,res_xy,dispersionInstance,True)
 orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
 starttime = time()
 initialpointsInstance.solveforpoints(parallelised=False)
@@ -51,6 +54,6 @@ fig,axes = plt.subplots()
 axes.plot(thetalist,rhoxylist,ls="-",marker="o",ms=2)
 axes.set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
 axes.set_xlabel(r'$\theta$')
-axes.text(70,5,r"Nd-LSCO x=0.24\nT=25 K\nB=45 T\n$\phi$=0")
+axes.text(0.1,0.1,f"Res={res_z}x{res_xy}\nPhi={phi} degrees",fontsize=10, transform=axes.transAxes)
 
 plt.show()
