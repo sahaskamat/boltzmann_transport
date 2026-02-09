@@ -3,29 +3,6 @@ import numpy as np
 from math import sqrt
 from numba import njit
 
-def deltap(p1,p2):
-    #takes input p1 and p2 as lists and returns magnitude of their difference
-    #works only for p1 and p2 of length 3
-    return norm([p1[i]-p2[i] for i in range(3)])
-
-def cross(a, b):
-    #manually defined cross product since np.cross is very slow
-    result = [a[1]*b[2] - a[2]*b[1],
-            a[2]*b[0] - a[0]*b[2],
-            a[0]*b[1] - a[1]*b[0]]
-
-    return result
-
-def dot(a,b):
-    #manually defined dot product since numpy is very slow
-    result = a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
-    return result
-
-def norm(p):
-    #manually define norm without going through numpy
-    result = sqrt(p[0]**2 + p[1]**2 + p[2]**2)
-    return result
-
 class LSCOdispersion:
     """
     Inputs:
@@ -49,8 +26,7 @@ class LSCOdispersion:
         self.b= self.a
         self.c = 2*6.6
 
-        #hopping parameters in eV from Yawen and Gael's paper:
-        T = (160)*(10**(-3))
+        #multiply parameters by T to get unitfull parameters in eV:
         T1 = T1multvalue*T
         T11 = T11multvalue*T
         Tz = Tzmultvalue*T
@@ -120,24 +96,22 @@ class FREEdispersion:
     """
     Inputs:
     mumultvalue (multiplicative factor that sets doping and hence chemical potential)
-    mumultvalue = 0.8243(critical point) or 1.15(far from lifshits singularity)
 
-    Class represents LSCO dispersion (remember to set doublefermisurface = True!)
+    Class represents a cylindrical free electron dispersion in the plane with some z axis warping
     Contains symbolic calculations that are lambdified to generate numeric values of important dispersion parameters
     """
-    def __init__(self,mumultvalue=0.8243):
+    def __init__(self,mu=7):
 
         #############################################################################################
-        #LSCO specific functions are below
+        #FREE electron specific functions are below
         #############################################################################################
 
         #define lattice constants in angstroms
         self.a = 1
         self.b= self.a
         self.c = 2
-
-        #hopping parameters in eV from Yawen and Gael's paper:
-        self.mu=7
+        self.mu=mu
+        
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
