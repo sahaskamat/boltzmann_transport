@@ -15,21 +15,14 @@ import conductivity
 def main():
 
     dispersionInstance = dispersion.LSCOdispersion()
-    initialpointsInstance = orbitcreation.InterpolatedCurves(50,100,dispersionInstance,True)
+    FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(20,200,dispersionInstance,True)
 
     starttime = time()
-    initialpointsInstance.solveforpoints(parallelised=False)
+    FSorbitsInstance.createFS(parallelised=False)
     endtime = time()
-    #initialpointsInstance.plotpoints()
+    FSorbitsInstance.plotpoints()
 
-    print(f"Time taken to create initialcurves = {endtime - starttime}")
-
-
-    #ax = plt.figure().add_subplot(projection='3d')
-
-    #plotting extendedcurveslist
-    #for curve in initialpointsInstance.extendedcurvesList:
-    #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
+    print(f"Time taken to create FSorbits = {endtime - starttime}, Number of orbits found = {len(FSorbitsInstance.FSorbits)}")
 
     theta = np.deg2rad(45)
     phi = np.deg2rad(0)
@@ -39,20 +32,19 @@ def main():
     #ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
 
     starttime = time()
-    orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance,B)
-    endtime = time()
-    print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}")
-
-    starttime = time()
-    conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
+    conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance)
     endtime = time()
     print(f"Time taken to create conductivityInstance =  {endtime - starttime}")
 
     starttime = time()
-    conductivityInstance.createAMatrix()
-    print(conductivityInstance.A.shape)
+    conductivityInstance.createAmatrix_Bindependent()
     endtime = time()
-    print(f"Time taken to create Amatrix =  {endtime - starttime}")
+    print(f"Time taken to create B independent Amatrix with shape {conductivityInstance.A_Bindependent.shape}=  {endtime - starttime}")
+
+    starttime = time()
+    conductivityInstance.createAmatrix_Bdependent(B)
+    endtime = time()
+    print(f"Time taken to create B dependent Amatrix =  {endtime - starttime}")
 
     starttime = time()
     conductivityInstance.createAlpha()
@@ -64,11 +56,6 @@ def main():
     endtime = time()
     print(f"Time taken to calculate conductivity = {endtime - starttime}")
     print(f"Calculated rho_zz: {np.linalg.inv(conductivityInstance.sigma)[2,2]*10e-5} mOhm cm")
-
-    #orbitsinstance.orbitdiagnosticplot()
-
-    #for orbit in listoforbits: ax.scatter(orbit[:,0],orbit[:,1],orbit[:,2],s=1)
-    #plt.show()    
 
 cProfile.run('main()',filename='stats.prof')
 #main()
