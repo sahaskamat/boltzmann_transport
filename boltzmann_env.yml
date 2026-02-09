@@ -2,7 +2,9 @@ name: boltzmann_env
 channels:
   - defaults
 dependencies:
-  - numbalsoda
+  - numpy
+  - matplotlib
+  - numba
   - scipy
   - joblib
   - sympy
