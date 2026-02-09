@@ -20,7 +20,7 @@ def main():
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
     endtime = time()
-    initialpointsInstance.plotpoints()
+    #initialpointsInstance.plotpoints()
 
     print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -31,7 +31,7 @@ def main():
     #for curve in initialpointsInstance.extendedcurvesList:
     #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-    theta = np.deg2rad(0)
+    theta = np.deg2rad(45)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
 
