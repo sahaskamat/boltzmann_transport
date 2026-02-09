@@ -25,16 +25,15 @@ if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
 # Module to find number of CPUS
 ##########################
 
-class InterpolatedCurves:
+class fermiSurfaceOrbits:
     """
     Inputs:
-    npoints (number of points to solve for on each side of FS)
+    res_z (number of slices of the fermi surface in the z direction, with each slice lying in the xy plane)
+    res_xy (number of points to solve for in each slice)
     dispersion (object of class dispersion)
     doublefermisurface (bool, True if unit cell size is c/2)
-    B_parr (list containing two floats, representing the in plane direction of B)
-    B (if B_parr is not supplied, in plane direction of B will be inferred)
 
-    This class replaces the older InitialPoints class, and is compatible with the Conductivity class out of the box
+    Initializes an object to create orbits on the fermi surface
     """
 
     def __init__(self,res_z,res_xy,dispersion,doublefermisurface):
@@ -53,18 +52,15 @@ class InterpolatedCurves:
 
         self.initialcurvesList = np.zeros((self.n_points,self.n_cuts,3)) #list of list of initialpoints lying on the fermi surface. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
 
-    def solveforpoints(self,parallelised=False):
+    def createFS(self,parallelised=False):
         """
-        Solves for points on four sides of the fermi surface
+        Solves for points on the fermi surface
         Inputs:
-        n_cuts (number of cuts along which to solve for points. each cut is a line along which points lying on the fermi surface are solved for)
         parallelised (bool, True if solving for points is to be parallelised across cores)
         Creates:
-        initialcurvesList (a list containing two numpy arrays, with each numpy array containing contiguous points lying along the fermi surface)
+        FSorbits (a numpy array with FSorbits[i] representing a single in-plane orbit)
         """
 
-        #angularwidth = np.pi/10 #angular width around van hole points to solve for points
-        #philist = np.concatenate([np.linspace(-angularwidth+alpha,angularwidth+alpha,6) for alpha in np.linspace(0,2*np.pi,4,endpoint=False)]) #list of phis along which to find curves lying on the fermi surface
         philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts) #list of phis along which to find curves lying on the fermi surface
 
         def getpoints(startingZcoords,phi):
@@ -85,35 +81,16 @@ class InterpolatedCurves:
         #create startingpoints by iterating getpoints() over self.planeZcoords
         for id,phi in enumerate(philist):
             startingpointsarray = getpoints(self.planeZcoords,phi)
-
             self.initialcurvesList[:,id] = np.delete(startingpointsarray,-1,axis=0)
+
+        self.FSorbits = self.initialcurvesList
 
     def plotpoints(self):
         ax = plt.figure().add_subplot(projection='3d')
 
         #plotting extendedcurveslist
         for curve in self.initialcurvesList:
-            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=10)
-
-        #plotting interpolatedcurves
-        #interpolatedcurveslist = np.array([[[interpolatingfunction(kz)[0],interpolatingfunction(kz)[1],kz] for kz in np.linspace((-np.pi)/self.c,(np.pi)/self.c,1000)] for interpolatingfunction in self.interpolatedcurveslist])
-
-        #for curve in interpolatedcurveslist:
-        #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
+            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=5)
 
         plt.show()
 
-
-class NewOrbits:
-    """
-    Inputs:
-    dispersion (object of type dispersion)
-    interpolatedcurves (onject of type interpolatedcurves)
-    B (magnetic field as a 3-vector)
-    """
-    def __init__(self,dispersion,interpolatedcurves):
-        self.dispersion = dispersion
-        self.interpolatedcurves = interpolatedcurves
-
-        self.timespentfindingpoints = 0
-        self.orbitsEQS = self.interpolatedcurves.initialcurvesList
