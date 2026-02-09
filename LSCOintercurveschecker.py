@@ -15,14 +15,12 @@ import conductivity
 def main():
 
     dispersionInstance = dispersion.LSCOdispersion()
-    initialpointsInstance = orbitcreation.InterpolatedCurves(200,dispersionInstance,True)
+    initialpointsInstance = orbitcreation.InterpolatedCurves(50,100,dispersionInstance,True)
 
     starttime = time()
     initialpointsInstance.solveforpoints(parallelised=False)
-    initialpointsInstance.extendedZoneMultiply(5)
-    initialpointsInstance.createPlaneAnchors(30)
-    #initialpointsInstance.plotpoints()
     endtime = time()
+    initialpointsInstance.plotpoints()
 
     print(f"Time taken to create initialcurves = {endtime - starttime}")
 
@@ -33,7 +31,7 @@ def main():
     #for curve in initialpointsInstance.extendedcurvesList:
     #    ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=1)
 
-    theta = np.deg2rad(80)
+    theta = np.deg2rad(0)
     phi = np.deg2rad(0)
     B = [45*np.sin(theta)*np.cos(phi),45*np.sin(theta)*np.sin(phi),45*np.cos(theta)]
 
@@ -41,15 +39,9 @@ def main():
     #ax.scatter(intersections[:,0],intersections[:,1],intersections[:,2],c='#FF0000',s=10)
 
     starttime = time()
-    orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance)
-    orbitsinstance.createOrbits(B,termination_resolution=0.1,mult_factor=10)
-    orbitsinstance.createOrbitsEQS(integration_resolution=0.1)
-    listoforbits = orbitsinstance.orbitsEQS
-    plt.show()    
-    #orbitsinstance.orbitdiagnosticplot()
-    listoforbits = orbitsinstance.orbitsEQS
+    orbitsinstance = orbitcreation.NewOrbits(dispersionInstance,initialpointsInstance,B)
     endtime = time()
-    print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}, time spent finding intitialpoints {orbitsinstance.timespentfindingpoints}")
+    print(f"Time taken to create orbits = {endtime - starttime}, number of orbits created {len(orbitsinstance.orbitsEQS)}")
 
     starttime = time()
     conductivityInstance = conductivity.Conductivity(dispersionInstance,orbitsinstance,initialpointsInstance)
@@ -71,6 +63,7 @@ def main():
     conductivityInstance.createSigma()
     endtime = time()
     print(f"Time taken to calculate conductivity = {endtime - starttime}")
+    print(f"Calculated rho_zz: {np.linalg.inv(conductivityInstance.sigma)[2,2]*10e-5} mOhm cm")
 
     #orbitsinstance.orbitdiagnosticplot()
 
