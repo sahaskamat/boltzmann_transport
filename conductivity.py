@@ -89,7 +89,7 @@ class Conductivity:
                 #off diagonal terms that simulate the derivative term from the boltzmann equation, in plane
                 next_Amatrixposition_inplane = self.Amatrixpositionlist[i,(j+1)%m]
                 prev_Amatrixposition_inplane = self.Amatrixpositionlist[i,(j-1)%m]
- 
+
                 graddata_inplane = graddatalist_inplane[Amatrixposition]
 
                 self.A[Amatrixposition,next_Amatrixposition_inplane] += graddata_inplane
@@ -113,10 +113,10 @@ class Conductivity:
         #first create matrix whose {i,j} element is {k_i,k_j}, which will be an input to the scattering-in formula
         plist = np.concatenate(self.FSorbitsInstance.FSorbits) #list of all momentum vectors in correct order
 
-        indices = np.indices([self.n,self.n]) #list of indices {i,j} to be extracted from plist  
+        indices = np.indices([self.n,self.n]) #list of indices {i,j} to be extracted from plist
 
         pi_minus_pj = (plist[indices])[0] - (plist[indices])[1] #the i,jth element of this matrix is p_i - p_j (directly features into the scattering in matrix)
-         
+
 
     def createAlpha(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface

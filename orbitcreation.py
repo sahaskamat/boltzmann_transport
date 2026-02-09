@@ -52,16 +52,26 @@ class fermiSurfaceOrbits:
 
         self.initialcurvesList = np.zeros((self.n_points,self.n_cuts,3)) #list of list of initialpoints lying on the fermi surface. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
 
-    def createFS(self,parallelised=False):
+    def createFS(self,tilingformat="variable",alpha=0,parallelised=False):
         """
         Solves for points on the fermi surface
         Inputs:
         parallelised (bool, True if solving for points is to be parallelised across cores)
+        tilingformat ("variable" if using an increased density of points near VHS, "regular" for uniform density of points)
+        alpha (larger alphas correspond to higher density of points near VHS)
         Creates:
         FSorbits (a numpy array with FSorbits[i] representing a single in-plane orbit)
         """
+        if tilingformat=="regular":
+            philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts) #list of phis along which to find curves lying on the fermi surface
+        else:
+            philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts)
+            philist = philist - alpha * np.sin(4*philist)
 
-        philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts) #list of phis along which to find curves lying on the fermi surface
+            isascending = np.all(np.diff(philist) > 0)
+            if not isascending:
+                raise Exception("alpha is too large and leads to overlapping points!")
+
 
         def getpoints(startingZcoords,phi):
             """

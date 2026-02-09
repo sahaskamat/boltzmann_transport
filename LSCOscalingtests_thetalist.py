@@ -7,8 +7,8 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(0,360,100)
-phi = 0
+thetalist = np.linspace(0,180,80)
+phi = 45
 
 res_z = 20
 res_xy = 100
@@ -17,9 +17,10 @@ phi_rad = np.deg2rad(phi)
 dispersionInstance = dispersion.LSCOdispersion()
 FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
 starttime = time()
-FSorbitsInstance.createFS(parallelised=False)
+FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
 endtime = time()
 print(f"Time taken to create Fermi Surface = {endtime - starttime}")
+FSorbitsInstance.plotpoints()
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance)
 starttime = time()
