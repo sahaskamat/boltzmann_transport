@@ -12,10 +12,11 @@ class Conductivity:
 
     Contains methods to calculate the Amatrix, alpha, and sigma
     """
-    def __init__(self,dispersionInstance,orbitsInstace,initialPointsInstance):
+    def __init__(self,dispersionInstance,orbitsInstace,initialPointsInstance,B):
         self.dispersionInstance = dispersionInstance
         self.orbitsInstance = orbitsInstace
         self.initialPointsInstance = initialPointsInstance
+        self.B = B
 
     def createAMatrix(self):
         #n is the number of total points in our list, which is also the number of states in our Hilbert space,
@@ -57,41 +58,41 @@ class Conductivity:
         stateslist = np.array([state for orbit in self.orbitsInstance.orbitsEQS for state in orbit]) #stateslist[i] = ith state
         invtaulist = self.dispersionInstance.invtau(np.transpose(stateslist)) #invtaulist[i]  = invtau(stateslist[i])
         self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(stateslist))) #self.dedk_list[i] = dedk(stateslist[i])
-        crosslist  = np.cross(self.dedk_list,self.orbitsInstance.B) #crosslist[i]  = dedk(state[i]) x B
+        crosslist  = np.cross(self.dedk_list,self.B) #crosslist[i]  = dedk(state[i]) x B
         dotlist_inplane = np.sum(crosslist*deltaparray_inplane_unitvectors,axis=1) #dotlist_inplane[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])
         dotlist_outofplane = np.sum(crosslist*deltaparray_outofplane_unitvectors,axis=1) #dotlist_outofplane[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1]) for out of plane states
         graddatalist_inplane = dotlist_inplane/(deltaparray_inplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1])
         graddatalist_outofplane = dotlist_outofplane/(deltaparray_outofplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1]) for out of plane states
 
         i=0 #i and j correspond to the ith orbit and jth state on that orbit that is being iterated
+        n = len(self.orbitsInstance.orbitsEQS) #n is the number of orbits
         for orbit in self.orbitsInstance.orbitsEQS:
-            m = len(orbit) #m x m is the size of the submatrix for this orbit
+            m = len(orbit) #m is the number of states on the current orbit
             j=0
 
             for state_id,state in enumerate(orbit):
                 #diagonal term coming from scattering out
                 Amatrixposition = Amatrixpositionlist[i,j]
-                self.A[Amatrixposition,Amatrixposition] = invtaulist[Amatrixposition]
+                self.A[Amatrixposition,Amatrixposition] += invtaulist[Amatrixposition]
 
-                #off diagonal terms that simulate the derivative term from the boltzmann equation
+                #off diagonal terms that simulate the derivative term from the boltzmann equation, in plane
                 next_Amatrixposition_inplane = Amatrixpositionlist[i,(j+1)%m]
                 prev_Amatrixposition_inplane = Amatrixpositionlist[i,(j-1)%m]
  
-                graddata = graddatalist_inplane[Amatrixposition]
+                graddata_inplane = graddatalist_inplane[Amatrixposition]
 
-                self.A[Amatrixposition,next_Amatrixposition_inplane] = graddata
+                self.A[Amatrixposition,next_Amatrixposition_inplane] += graddata_inplane
+                self.A[Amatrixposition,prev_Amatrixposition_inplane] += -graddata_inplane
 
-                #TEST BY CHANGING DIFFERENTIATION METHOD:
-                #self.A[i,i_next] += np.linalg.norm(np.cross(self.dispersionInstance.dedk(state),self.orbitsInstance.B))/(dispersion.deltap(orbit[i_next-submatrixindex],orbit[i - submatrixindex])*43.32)
+                #off diagonal terms that simulate the derivative term from the boltzmann equation, out of plane
+                next_Amatrixposition_outofplane = Amatrixpositionlist[(i+1)%n,j]
+                prev_Amatrixposition_outofplane = Amatrixpositionlist[(i-1)%n,j]
 
-                #testing print
-                #print(deltap(orbit1[i_next-submatrixindex],orbit1[i_prev - submatrixindex]))
-                #print(state)
+                graddata_outofplane = graddatalist_outofplane[Amatrixposition]
 
-                self.A[Amatrixposition,prev_Amatrixposition_inplane] = -graddata
+                self.A[Amatrixposition,next_Amatrixposition_outofplane] += graddata_outofplane
+                self.A[Amatrixposition,prev_Amatrixposition_outofplane] += -graddata_outofplane
 
-                #TEST BY CHANGING DIFFERENTIATION METHOD:
-                #self.A[i,i] += -self.A[i,i_next]
                 j += 1
             i += 1
 
@@ -122,7 +123,7 @@ class Conductivity:
         self.sigma = np.zeros([3,3])
 
         #perptermlist[i] is a vector that lies along the fermi surface, pointing from the ith point to the orbit above it
-        perptermlist = self.dispersionInstance.dkperp(self.orbitsInstance.B,self.initialPointsInstance.dkz,self.dedk_list)
+        perptermlist = self.dispersionInstance.dkperp(self.initialPointsInstance.dkz,self.initialPointsInstance.dkz,self.dedk_list)
 
         #nextstatepointerarray[i] is a vector that lies along the fermi surface and points from the ith point to the succeeding point on a given orbit
         nextstatepointerlist = []

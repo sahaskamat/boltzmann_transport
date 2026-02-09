@@ -112,10 +112,9 @@ class NewOrbits:
     interpolatedcurves (onject of type interpolatedcurves)
     B (magnetic field as a 3-vector)
     """
-    def __init__(self,dispersion,interpolatedcurves,B):
+    def __init__(self,dispersion,interpolatedcurves):
         self.dispersion = dispersion
         self.interpolatedcurves = interpolatedcurves
 
         self.timespentfindingpoints = 0
         self.orbitsEQS = self.interpolatedcurves.initialcurvesList
-        self.B = B #this definition is legacy since conductivity assumes NewOrbits.B exits, but needs to go and enter as an input to conductivity
