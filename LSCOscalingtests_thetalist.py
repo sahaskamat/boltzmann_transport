@@ -20,7 +20,6 @@ starttime = time()
 FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
 endtime = time()
 print(f"Time taken to create Fermi Surface = {endtime - starttime}")
-FSorbitsInstance.plotpoints()
 
 conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance)
 starttime = time()
@@ -44,6 +43,8 @@ endtime_global = time()
 print(f"execution time: {endtime_global-starttime_global}")
 
 np.savetxt("rhoxyvstPhi"+str(phi)+".dat",np.transpose([thetalist,rhoxylist]))
+
+#FSorbitsInstance.plotpoints()
 
 fig,axes = plt.subplots()
 

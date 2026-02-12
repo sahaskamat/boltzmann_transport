@@ -63,9 +63,9 @@ class fermiSurfaceOrbits:
         FSorbits (a numpy array with FSorbits[i] representing a single in-plane orbit)
         """
         if tilingformat=="regular":
-            philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts) #list of phis along which to find curves lying on the fermi surface
+            philist = np.linspace(0, 2*np.pi, self.n_cuts, endpoint=False) #list of phis along which to find curves lying on the fermi surface
         else:
-            philist = np.arange(0,2*np.pi,2*np.pi/self.n_cuts)
+            philist = np.linspace(0, 2*np.pi, self.n_cuts, endpoint=False)
             philist = philist - alpha * np.sin(4*philist)
 
             isascending = np.all(np.diff(philist) > 0)
