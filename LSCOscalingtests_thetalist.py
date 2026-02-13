@@ -8,20 +8,20 @@ from time import time
 
 starttime_global = time()
 thetalist = np.linspace(0,180,80)
-phi = 45
+phi = 0
+phi_rad = np.deg2rad(phi)
 
 res_z = 20
 res_xy = 100
 
-phi_rad = np.deg2rad(phi)
-dispersionInstance = dispersion.LSCOdispersion()
+dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.134,T11multvalue=0.067,Tzmultvalue=0.03,mumultvalue=0.805)
 FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
 starttime = time()
 FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
 endtime = time()
 print(f"Time taken to create Fermi Surface = {endtime - starttime}")
 
-conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance)
+conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=12.595,invtau_aniso=63.823)
 starttime = time()
 conductivityInstance.createAmatrix_Bindependent()
 endtime = time()
@@ -44,7 +44,7 @@ print(f"execution time: {endtime_global-starttime_global}")
 
 np.savetxt("rhoxyvstPhi"+str(phi)+".dat",np.transpose([thetalist,rhoxylist]))
 
-#FSorbitsInstance.plotpoints()
+FSorbitsInstance.plotpoints()
 
 fig,axes = plt.subplots()
 

@@ -12,9 +12,11 @@ class Conductivity:
 
     Contains methods to calculate the Amatrix, alpha, and sigma
     """
-    def __init__(self,dispersionInstance,FSorbitsInstance):
+    def __init__(self,dispersionInstance,FSorbitsInstance,invtau_iso = 12.595,invtau_aniso = 63.823):
         self.dispersionInstance = dispersionInstance
         self.FSorbitsInstance = FSorbitsInstance
+        self.invtau_iso = invtau_iso
+        self.invtau_aniso = invtau_aniso
 
     def createAmatrix_Bindependent(self):
         """
@@ -54,7 +56,7 @@ class Conductivity:
 
         #creates a list of states in the same order as they would appear in the double loop
         stateslist = np.array([state for orbit in self.FSorbitsInstance.FSorbits for state in orbit]) #stateslist[i] = ith state
-        self.invtaulist = self.dispersionInstance.invtau(np.transpose(stateslist)) #invtaulist[i]  = invtau(stateslist[i])
+        self.invtaulist = self.dispersionInstance.invtau(np.transpose(stateslist),invtau_iso=self.invtau_iso,invtau_aniso=self.invtau_aniso) #invtaulist[i]  = invtau(stateslist[i])
         self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(stateslist))) #self.dedk_list[i] = dedk(stateslist[i])
 
         #now populate the Amatrix with B independent terms
