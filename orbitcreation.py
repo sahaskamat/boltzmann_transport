@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from time import time
 import dispersion
 from numba import njit,cfunc
+from itertools import product, combinations
 
 ########################
 # Module to find number of CPUSnumbalsoda
@@ -95,12 +96,32 @@ class fermiSurfaceOrbits:
 
         self.FSorbits = self.initialcurvesList
 
+    def calculateDoping(self): 
+        FSvolume = 0
+        for orbit in self.FSorbits:
+            orbit_plus1 = np.roll(orbit,-1,axis=0) #orbit_plus1[i] is the next point after orbit[i] on the orbit
+            dk = orbit_plus1 - orbit #dk[i] = orbit[i+1] - orbit[i], vector connecting successive points
+            k_cross_dk = np.cross(orbit,dk) #cross product of k and dk
+            orbitarea = 0.5*np.sum(k_cross_dk[:,2]) #area of the orbit is given by the sum of the z components of k cross dk
+            FSvolume += orbitarea*np.linalg.norm(self.dkz) #multiply by dkz to get volume of each orbit
+        BZvolume = (2*np.pi/self.dispersion.a)*(2*np.pi/self.dispersion.b)*(2*np.pi/self.c) #volume of the Brillouin zone
+        return 2*(0.5 - FSvolume/BZvolume) #return number of extra holes
+
     def plotpoints(self):
         ax = plt.figure().add_subplot(projection='3d')
 
         #plotting extendedcurveslist
         for curve in self.initialcurvesList:
             ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=5)
+
+        #making unit cell
+        hx, hy, hz = np.pi/self.dispersion.a, np.pi/self.dispersion.b, np.pi/self.c  
+
+        pts = list(product([-hx, hx], [-hy, hy], [-hz, hz]))
+
+        for s, e in combinations(pts, 2):
+            if sum(abs(a-b) for a,b in zip(s,e)) in (2*hx, 2*hy, 2*hz):
+                ax.plot3D(*zip(s,e), color="k")
 
         plt.show()
 
