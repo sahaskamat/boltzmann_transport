@@ -71,6 +71,10 @@ class Conductivity:
             i+= 1
 
     def createAmatrix_Bdependent(self,B):
+        if np.linalg.norm(B) == 0:
+            self.A = np.copy(self.A_Bindependent)
+            return
+
         self.A = np.copy(self.A_Bindependent) #create a copy of the B independent Amatrix to populate with B dependent terms
         self.B = B
         crosslist  = np.cross(self.dedk_list,self.B) #crosslist[i]  = dedk(state[i]) x B
