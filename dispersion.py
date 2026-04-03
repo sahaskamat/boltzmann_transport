@@ -72,11 +72,9 @@ class LSCOdispersion:
 
     @staticmethod
     @njit
-    def invtau(p):
+    def invtau(p,invtau_iso = 12.595,invtau_aniso = 63.823):
         #scattering rate(inverse scattering time)
         #units of tau are ps, invtau are ps-1
-        invtau_iso = 12.595
-        invtau_aniso = 63.823
         nu=12
 
         angledependence = np.float_power(np.abs((p[1]**2-p[0]**2)/(p[1]**2+p[0]**2)),nu)
