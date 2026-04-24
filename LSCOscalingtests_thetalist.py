@@ -12,7 +12,7 @@ thetalist = np.linspace(-14,99,80)
 res_z = 20
 res_xy = 100
 
-params = 0.07992756258272564,12.656955338072684,252.81365144783192 #Tzmultvalue,invtau_iso,invtau_aniso
+params = 0.07941809516397977,12.952701428109343,185.03217441952887 #Tzmultvalue,invtau_iso,invtau_aniso
 
 dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.134,T11multvalue=0.067,Tzmultvalue=params[0],mumultvalue=0.805)
 FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)

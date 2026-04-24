@@ -54,9 +54,12 @@ class Conductivity:
         self.deltaparray_outofplane_norms = np.linalg.norm(deltaparray_outofplane,axis=1)
         self.deltaparray_outofplane_unitvectors = deltaparray_outofplane/self.deltaparray_outofplane_norms[:,None]
 
+        #list of fermi surface areas associated with each point
+        self.patcharealist = (self.deltaparray_inplane_norms*self.deltaparray_outofplane_norms)/4
+
         #creates a list of states in the same order as they would appear in the double loop
         stateslist = np.array([state for orbit in self.FSorbitsInstance.FSorbits for state in orbit]) #stateslist[i] = ith state
-        self.invtaulist = self.dispersionInstance.invtau(np.transpose(stateslist),invtau_iso=self.invtau_iso,invtau_aniso=self.invtau_aniso) #invtaulist[i]  = invtau(stateslist[i])
+        self.invtaulist = self.dispersionInstance.invtau_iso(np.transpose(stateslist),invtau_iso=self.invtau_iso,invtau_aniso=self.invtau_aniso) #invtaulist[i]  = invtau(stateslist[i])
         self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(stateslist))) #self.dedk_list[i] = dedk(stateslist[i])
 
         #now populate the Amatrix with B independent terms
@@ -137,25 +140,12 @@ class Conductivity:
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])
 
-        #perptermlist[i] is a vector that lies along the fermi surface, pointing from the ith point to the orbit above it
-        perptermlist = self.dispersionInstance.dkperp(self.FSorbitsInstance.dkz,self.FSorbitsInstance.dkz,self.dedk_list)
-
-        #nextstatepointerarray[i] is a vector that lies along the fermi surface and points from the ith point to the succeeding point on a given orbit
-        nextstatepointerlist = []
-        for orbit in self.FSorbitsInstance.FSorbits:
-            orbit_plus1 = np.roll(orbit,-1,axis=0)
-            nextstatepointerlist.append(orbit - orbit_plus1)
-        nextstatepointerarray =   np.array([value for sublist in nextstatepointerlist for value in sublist])
-
-        #patcharealist[i] is the integration patch area corresponding to the ith point
-        patcharealist = np.linalg.norm(np.cross(nextstatepointerarray,perptermlist),axis=1)
-
         for mu in range(3):
             for nu in range(3):
                 #this keeps track of the total area over which we integrate
                 self.areasum = 0
-                self.sigma[mu,nu] = (3.699/(4*(np.pi**3)))*np.sum(self.moddedk_array[:,mu]*self.alpha[:,nu]*patcharealist)
+                self.sigma[mu,nu] = (3.699/(4*(np.pi**3)))*np.sum(self.moddedk_array[:,mu]*self.alpha[:,nu]*self.patcharealist)
 
-                self.areasum = np.sum(patcharealist)
+                self.areasum = np.sum(self.patcharealist)
 
 
