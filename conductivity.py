@@ -12,15 +12,15 @@ class Conductivity:
 
     Contains methods to calculate the Amatrix, alpha, and sigma
     """
-    def __init__(self,dispersionInstance,FSorbitsInstance,invtau_iso = 12.595,invtau_aniso = 63.823):
+    def __init__(self,dispersionInstance,FSorbitsInstance,invtau_iso = 12.595,plotScattering=False):
         self.dispersionInstance = dispersionInstance
         self.FSorbitsInstance = FSorbitsInstance
-        self.invtau_iso = invtau_iso
-        self.invtau_aniso = invtau_aniso
+        self.invtau_iso = invtau_iso #isotropic scattering rate
+        self.plotScattering = plotScattering
 
-    def createAmatrix_Bindependent(self):
+    def createAmatrix_Bindependent_isotropic(self):
         """
-        Creates lists and functions used for the Amatrix calculations that are independent of the magnetic field
+        Creates lists and functions used for the Amatrix calculations that are independent of the magnetic field and depend only on the isotropic (electron-electron) scattering rate
         Then populates an Amatrix with terms independent of the magnetic field
         """
         #n is the number of total points in our list, which is also the number of states in our Hilbert space,
@@ -58,9 +58,9 @@ class Conductivity:
         self.patcharealist = (self.deltaparray_inplane_norms*self.deltaparray_outofplane_norms)/4
 
         #creates a list of states in the same order as they would appear in the double loop
-        stateslist = np.array([state for orbit in self.FSorbitsInstance.FSorbits for state in orbit]) #stateslist[i] = ith state
-        self.invtaulist = self.dispersionInstance.invtau_iso(np.transpose(stateslist),invtau_iso=self.invtau_iso,invtau_aniso=self.invtau_aniso) #invtaulist[i]  = invtau(stateslist[i])
-        self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(stateslist))) #self.dedk_list[i] = dedk(stateslist[i])
+        self.stateslist = np.array([state for orbit in self.FSorbitsInstance.FSorbits for state in orbit]) #stateslist[i] = ith state
+        self.invtau_iso_list = np.ones(len(self.stateslist))*self.invtau_iso #invtau_iso_list[i] = isotropic scattering rate at state i
+        self.dedk_list = np.transpose(self.dispersionInstance.dedk(np.transpose(self.stateslist))) #self.dedk_list[i] = dedk(self.stateslist[i])
 
         #now populate the Amatrix with B independent terms
         i=0 #i and j correspond to the ith orbit and jth state on that orbit that is being iterated
@@ -69,9 +69,75 @@ class Conductivity:
             for state in orbit:
                 #diagonal term coming from scattering out
                 Amatrixposition = self.Amatrixpositionlist[i,j]
-                self.A_Bindependent[Amatrixposition,Amatrixposition] += self.invtaulist[Amatrixposition]
+                self.A_Bindependent[Amatrixposition,Amatrixposition] += self.invtau_iso_list[Amatrixposition]
                 j+= 1
             i+= 1
+
+    def create_Hfunc(self,scatteringmodel,**kwargs):
+        """
+        Creates a function self.H_func(k,k') that takes in k (3-vector) and k' (list of 3-vectors) and outputs a list of scattering matrix elements
+        Each matrix element corresponds to a 3-vector in k'
+        """
+
+        #import a scattering kernel h(deltak) that takes in deltak (list of 3-vectors) and outputs a list of scalars corresponding to the scattering matrix values
+        import scattering_kernels
+
+        #reciprocal lattice vectors
+        g1,g2,g3 = self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3
+
+        def H_func(k,kprime): #should be vectorized in kprime
+            deltak = k-kprime #array of 3-vectors if kprime is a 3-vec array
+
+            #reducing deltak to its minimum value by accounting for periodic boundaries for the BZ
+            deltak[:,0] = deltak[:,0] - g1*np.round(deltak[:,0]/g1)
+            deltak[:,1] = deltak[:,1] - g2*np.round(deltak[:,1]/g2)
+            deltak[:,2] = deltak[:,2] - g3*np.round(deltak[:,2]/g3)
+            
+            kernel = getattr(scattering_kernels, scatteringmodel) #imports a function that takes deltak,g (list of reciprocal lattice vectors g1,g2,g3),**kwargs as input and outputs scattering matrix elements corresponding to each deltak
+            h_func_val =  kernel(deltak,[g1,g2,g3],**kwargs)
+            
+            return np.nan_to_num(h_func_val, nan=0.0, posinf=0.0)
+
+        self.H_func = H_func
+
+    def createAmatrix_Bindependent_fwdscatter_out(self):
+        """
+            Creates lists and functions used for the Amatrix calculations that are independent of the magnetic field and depend only on the forward scattering
+            Then populates an Amatrix with terms independent of the magnetic field
+        """
+
+        #first create the scattering out terms
+
+        #scattering out list used for diagnostic plot
+        dgdt_out_list = []
+
+        #i and j correspond to the ith orbit and jth state on that orbit that is being iterated
+        for i,orbit in enumerate(self.FSorbitsInstance.FSorbits):
+            for j,state in enumerate(orbit):
+                #diagonal term coming from scattering out
+                Amatrixposition = self.Amatrixpositionlist[i,j]
+                
+                Hlist = self.H_func(state,self.stateslist) #creates a list of H(k,k') where k is the state being iterated and k' are all the other states
+                dgdt_out = np.sum((Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1)) #dgdt_out = sum(patcharea(k')*H(k,k')/dEdk(k'))
+
+                self.A_Bindependent[Amatrixposition,Amatrixposition] += dgdt_out
+                dgdt_out_list.append(dgdt_out)
+
+        if self.plotScattering:
+            self.plotScatteringOut(dgdt_out_list)
+
+    def createAmatrix_Bindependent_fwdscatter_in(self):
+        #now create scattering in terms
+        #first iterate over row number of the Amatrix
+        #i_row and j_row correspond to the ith orbit and jth state on that orbit that is being iterated, which corresponds to the Amatrix[i_row,j_row] row of the Amatrix
+        for i_row,orbit_row in enumerate(self.FSorbitsInstance.FSorbits):
+            for j_row,state_row in enumerate(orbit_row):
+                Amatrixposition_row = self.Amatrixpositionlist[i_row,j_row] 
+
+                Hlist = self.H_func(state_row,self.stateslist)
+                row_to_add = (Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1) #computes the scattering in terms on this row of amatrix
+                self.A_Bindependent[Amatrixposition_row,:] = self.A_Bindependent[Amatrixposition_row,:] - row_to_add #add this row to the A matrix
+        
 
     def createAmatrix_Bdependent(self,B):
         if np.linalg.norm(B) == 0:
@@ -146,6 +212,49 @@ class Conductivity:
                 self.areasum = 0
                 self.sigma[mu,nu] = (3.699/(4*(np.pi**3)))*np.sum(self.moddedk_array[:,mu]*self.alpha[:,nu]*self.patcharealist)
 
-                self.areasum = np.sum(self.patcharealist)
+        self.areasum = np.sum(self.patcharealist)
 
+    def plotScatteringOut(self,dgdt_out_list):
+        #creates a plot of scattering out rate vs angle
+        import matplotlib.pyplot as plt
+        fig= plt.figure(figsize=(15, 5))
+        ax1 = fig.add_subplot(1, 3, 1)
+        ax1_twin = ax1.twinx()
+        ax2 = fig.add_subplot(1, 3, 2)
+        ax3 = fig.add_subplot(1, 3, 3)
+
+        #pick an orbit in the middle,start and halfway point of the FS
+        orbit_numbers = [0,self.FSorbitsInstance.n_points//8,self.FSorbitsInstance.n_points//4,self.FSorbitsInstance.n_points//2]
+
+        for id,orbit_num in enumerate(orbit_numbers):
+            #iterate over this orbit and plot scattering rate
+            for (j,state) in enumerate(self.FSorbitsInstance.FSorbits[orbit_num]):
+                theta = np.arctan2(state[1],state[0])
+                r = np.sqrt(state[1]**2 + state[0]**2) 
+                dgdt_out = dgdt_out_list[self.Amatrixpositionlist[orbit_num,j]]
+                dos = 1/np.linalg.norm(self.dedk_list,axis=1)[self.Amatrixpositionlist[orbit_num,j]]
+                vz = -self.dedk_list[self.Amatrixpositionlist[orbit_num,j],2]
+
+                ax1.scatter(theta,dgdt_out+self.invtau_iso,color=f"C{id}",s=5)
+                ax1.scatter(theta,10+189.85506941378708*np.cos(2*theta)**12,color=f"black",s=5)
+                #ax1_twin.scatter(theta,vz,color=f"C{id+4}",s=5,marker="v")
+
+                ax2.scatter(state[0],state[1],color=f"C{id}",s=5)
+                ax3.scatter(theta,dos,color=f"C{id}",s=5)
+
+        #reciprocal lattice vectors
+        g1,g2,g3 = self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3
+        ax2.plot([-g1/2,g1/2,g1/2,-g1/2,-g1/2],[g2/2,g2/2,-g2/2,-g2/2,g2/2],color='black')
+
+        ax1.set_title("Scattering out rate")
+        ax1.set_xlim(-np.pi/2,np.pi/2)
+        ax1.plot(0,0)
+        ax1_twin.set_ylim(-0.1,0.5)
+        ax2.set_title("Fermi Surface")
+        ax3.set_title("Density of states")
+        ax3.set_xlim(-np.pi/2,np.pi/2)
+        ax3.plot(0,0)
+
+        plt.tight_layout()
+        plt.show()
 
