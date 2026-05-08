@@ -51,6 +51,11 @@ class fermiSurfaceOrbits:
         self.planeZcoords = np.linspace(-(np.pi)/self.c,(np.pi)/self.c,self.n_points+1) #create zcoordinates, each defining a plane on which points used for interpolation will be found. Exclude endpoint so that zone can be multiplied easily
         self.dkz = np.array([0,0,self.planeZcoords[1] - self.planeZcoords[0]]) #vector connecting two planes used for area calculations in conductivity
 
+        #create reciprocal lattice vectors
+        self.g1 = (2*np.pi)/self.dispersion.a
+        self.g2 = (2*np.pi)/self.dispersion.b
+        self.g3 = (2*np.pi)/self.c
+
         self.initialcurvesList = np.zeros((self.n_points,self.n_cuts,3)) #list of list of initialpoints lying on the fermi surface. each sublist should be a contiguous set of points. eg: [[point1-,point2-,point3-],[point1+,point2+,point3+]]
 
     def createFS(self,tilingformat="variable",alpha=0,parallelised=False):
