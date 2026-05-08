@@ -7,25 +7,37 @@ from makesigmalist import makelist_parallel
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(-14,99,80)
+thetalist = np.linspace(-14,99,20)
 
 res_z = 20
 res_xy = 100
 
-params = 0.07941809516397977,12.952701428109343,185.03217441952887 #Tzmultvalue,invtau_iso,invtau_aniso
+Tzmultvalue = 0.0673
+invtau_iso =1
+strength = 2
+spread_xy=0.1
+spread_z=1
+mumultvalue=0.81
 
-dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.134,T11multvalue=0.067,Tzmultvalue=params[0],mumultvalue=0.805)
+plotScattering=True
+
+dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.132,T11multvalue=0.066,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
 FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
 starttime = time()
 FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
 endtime = time()
 print(f"Time taken to create Fermi Surface = {endtime - starttime}")
+print(f"Doping={FSorbitsInstance.calculateDoping()}")
 
-def create_rhozz(phi,Bmag):
+def create_rhozz(phi,Bmag,scattering_in=True):
     phi_rad = np.deg2rad(phi)
-    conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=params[1],invtau_aniso=params[2])
+    if scattering_in: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,plotScattering=plotScattering)
+    else: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,strength=strength,spread_xy=spread_xy,plotScattering=False)
     starttime = time()
-    conductivityInstance.createAmatrix_Bindependent()
+    conductivityInstance.createAmatrix_Bindependent_isotropic()
+    conductivityInstance.create_Hfunc(scatteringmodel="pancake",strength=strength,spread_xy=spread_xy,spread_z=spread_z)
+    conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
+    if scattering_in: conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
     endtime = time()
     print(f"Time taken to create B independent Amatrix =  {endtime - starttime}")
 
@@ -48,23 +60,33 @@ def create_rhozz(phi,Bmag):
 
 #p.savetxt("rhoxyvstPhi"+str(phi)+".dat",np.transpose([thetalist,rhoxylist]))
 
-FSorbitsInstance.plotpoints()
-fig,axes = plt.subplots()
-
 #load data
-data_theta0,data_rhozz0 = np.loadtxt("data/2601C/2601C_phi0_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-data_theta45,data_rhozz45 = np.loadtxt("data/2601C/2601C_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+data_theta0,data_rhozz0 = np.loadtxt("data/2511A/2511A_phi0_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+#data_theta45,data_rhozz45 = np.loadtxt("data/2511A/2511A_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 
 #generate data
-rhozzlist0 = create_rhozz(phi=0,Bmag=45)
-rhozzlist45= create_rhozz(phi=45,Bmag=45)
+rhozzlist0 = create_rhozz(phi=0,Bmag=45,scattering_in=True)
+#rhozzlist0_withoutSCin = create_rhozz(phi=0,Bmag=45,scattering_in=False)
+#rhozzlist45 = create_rhozz(phi=45,Bmag=45,scattering_in=True)
 
-axes.plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
-axes.plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
-axes.plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
-axes.plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
-axes.set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
-axes.set_xlabel(r'$\theta$')
-axes.text(0.1,0.1,f"LSCO x=0.22\nT=30 K\nRes={res_z}x{res_xy}",fontsize=10, transform=axes.transAxes)
+#FSorbitsInstance.plotpoints()
+fig,axes = plt.subplots(nrows=1,ncols=2, figsize=(10, 5))
 
+axes[0].plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
+#axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
+#axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+#axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+axes[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )") 
+axes[0].set_xlabel(r'$\theta$')
+axes[0].text(0.1,0.1,f"LSCO x=0.24\nT=30 K\nRes={res_z}x{res_xy}\nPancake Scatterers",fontsize=10, transform=axes[0].transAxes)
+axes[0].legend()
+
+axes[1].plot(thetalist,rhozzlist0/rhozzlist0[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
+#axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-1],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[1].set_ylabel(r"$\rho_{zz}/\rho_{zz0}$") #($m\Omega$ cm )
+axes[1].set_xlabel(r'$\theta$')
+
+plt.tight_layout()
 plt.show()
