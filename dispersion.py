@@ -35,6 +35,7 @@ class LSCOdispersion:
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
+        #energy in eV, k in (angstrom-1)
         en = -self.mu - 2*T*(symp.cos(kx*self.a) + symp.cos(ky*self.a)) - 4*T1*symp.cos(kx*self.a)*symp.cos(ky*self.a) - 2*T11*(symp.cos(2*kx*self.a) + symp.cos(2*ky*self.a)) - 2*Tz*symp.cos((kx*self.a)/2)*symp.cos((ky*self.a)/2)*symp.cos((kz*self.c)/2)*((symp.cos(kx*self.a) - symp.cos(ky*self.a))**2)
         graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
@@ -68,27 +69,6 @@ class LSCOdispersion:
 
         self.dedk = (lambda p: graden_numeric(p[0],p[1],p[2]))
 
-    #function that defines the angle dependence of invtau, to be multiplied with invtau_aniso
-
-    @staticmethod
-    @njit
-    def invtau(p,invtau_iso = 12.595,invtau_aniso = 63.823):
-        #scattering rate(inverse scattering time)
-        #units of tau are ps, invtau are ps-1
-        nu=12
-
-        angledependence = np.float_power(np.abs((p[1]**2-p[0]**2)/(p[1]**2+p[0]**2)),nu)
-
-        return (invtau_iso + invtau_aniso*angledependence)
-
-    @staticmethod
-    def dkperp(B,dkz,dedk):
-        #this calculates the length element lying along the fermi surface for integration
-        #dkz is any point on the plane containing the next orbit
-        nvec = np.cross(dedk,np.cross(dedk,B)) #nvec = dedk x (dedk x B)
-        scalar_term = (np.dot(dkz,B))/(np.dot(nvec,B))
-        dkperp = scalar_term[:,None]*nvec
-        return dkperp
 
 class FREEdispersion:
     """
