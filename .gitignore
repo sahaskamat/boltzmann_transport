@@ -88,11 +88,7 @@ ipython_config.py
 *.txt
 
 #data folders
-fit_logs_all_free_params/
-fit_logs_fixTz_at35K/
-ppms data/
-fit_logs_only22perc30deg/
-data/
+fitting/fit_logs
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
