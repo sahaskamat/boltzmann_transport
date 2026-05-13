@@ -7,4 +7,4 @@ name = "boltzmann_transport"
 version = "0.1.0"
 
 [tool.setuptools]
-packages = ["transport"]
+packages = ["transport","fitting"]

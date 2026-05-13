@@ -77,7 +77,6 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
 
 # IPython
 profile_default/
@@ -85,10 +84,8 @@ ipython_config.py
 
 #other files
 .git*
-*.txt
 
 #data folders
-fitting/fit_logs
 
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is

@@ -110,7 +110,9 @@ class fermiSurfaceOrbits:
             orbitarea = 0.5*np.sum(k_cross_dk[:,2]) #area of the orbit is given by the sum of the z components of k cross dk
             FSvolume += orbitarea*np.linalg.norm(self.dkz) #multiply by dkz to get volume of each orbit
         BZvolume = (2*np.pi/self.dispersion.a)*(2*np.pi/self.dispersion.b)*(2*np.pi/self.c) #volume of the Brillouin zone
-        return 2*(0.5 - FSvolume/BZvolume) #return number of extra holes
+        calculated_doping = 2*(0.5 - FSvolume/BZvolume) #return number of extra holes
+        print(f"Doping = {calculated_doping}%")
+        return calculated_doping 
 
     def plotpoints(self):
         ax = plt.figure().add_subplot(projection='3d')

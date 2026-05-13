@@ -1,4 +1,4 @@
-from fitting.basinhopping_singlephi import fit_data
+from fitting.globaloptimization_singlephi import fit_data
 
 #fit 22 percent data
 fixedparams = (190e-3,-0.134,0.067,0.805) #T,T1multvalue,T11multvalue,mumultvalue

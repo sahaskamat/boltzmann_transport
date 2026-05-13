@@ -12,7 +12,7 @@ import os
 
 plt.ion()
 
-def fit_data_shape(sample="2511A",doping="24",temp=30,theta_max=99,phi=0,field=45.0,fixedparams=(190e-3,-0.132,0.066),mumultvalue=0.81):
+def fit_data(sample="2511A",doping="24",temp=30,theta_max=99,phi=0,field=45.0,fixedparams=(190e-3,-0.132,0.066),mumultvalue=0.81):
     #fixed params: (T,T1multvalue,T11multvalue)
 
     T = temp
@@ -89,7 +89,7 @@ def fit_data_shape(sample="2511A",doping="24",temp=30,theta_max=99,phi=0,field=4
         plt.show(block=False)
         plt.pause(0.1)
 
-        file_path = f"fit_logs_nonRTA/fit_logs_{doping}perc_{T}K_{scatteringmodel}.txt"
+        file_path = f"fitting/fit_logs_nonRTA/fit_logs_{doping}perc_{T}K_{scatteringmodel}.txt"
         if os.path.exists(file_path):
             with open(file_path,"a") as f:
                     f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy}\n")
@@ -142,4 +142,4 @@ def fit_data_shape(sample="2511A",doping="24",temp=30,theta_max=99,phi=0,field=4
     
 
 if __name__ == "__main__":
-    print(fit_data_shape())
+    print(fit_data())
