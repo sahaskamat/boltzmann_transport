@@ -3,14 +3,22 @@ import matplotlib.pyplot as plt
 import transport.dispersion as dispersion
 import transport.orbitcreation as orbitcreation
 import transport.conductivity as conductivity
-from transport.makesigmalist import makelist_parallel
+from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
 from scipy.optimize import differential_evolution,Bounds
 import os
 
 plt.ion()
 
-def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),initialguess=(0.114,13.42,99.98,0.105,1.6595)):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipi",initialguess=(0.114,13.42,99.98,0.105,1.6595),bounds = Bounds([0.01,0,0,0.05,0],[0.12,30,1000,0.4,12]),parallel_over_theta="True"):
+    """
+    Inputs: 
+    scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
+    initialguess (tuple of (tzmultvalue,**kwargs) to be passed to the global optimizer as an initial guess)
+    bounds (instance of type scipy.optimize.Bounds that specifies search space for solutions)
+    parallel_over_theta (bool, if True, values of resistivity are calculated paralelly for all values of theta. If False, values are calculated paralelly over all generations)
+    """
+
     T = temp
     #global params for the fit
     starttime_global = time()
@@ -19,8 +27,6 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
 
     res_z = 20
     res_xy = 100
-
-    scatteringmodel="pipi"
 
     #load data
     data_theta0,data_rhozz0 = np.loadtxt(f"data/admr_data/{sample}/{sample}_phi0_T{T}K_B{field}T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
@@ -58,7 +64,9 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
                 #print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
                 return conductivityInstance.sigma,conductivityInstance.areasum
 
-            sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
+            if parallel_over_theta: sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
+            else: sigmalist,rholist,arealist = makelist_serial(getsigma,thetalist)
+
             rhozzlist= [rho[2,2]*10e-5 for rho in rholist]
 
             return rhozzlist
@@ -97,8 +105,9 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         return cost
     
     """Differential evolution"""
-    bounds = Bounds([0.01,0,0,0.05,0],[0.12,30,1000,0.4,12]) #Tzmultvalue,invtau_iso,strength,spread_xy,angular var
-    res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=10000)
+    if parallel_over_theta: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=10000)
+    else: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=10000,workers=-1)
+
     return res.x
 
 if __name__ == "__main__":
