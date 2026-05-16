@@ -7,7 +7,7 @@ from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(-14,99,20)
+thetalist = np.linspace(-14,99,40)
 
 res_z = 20
 res_xy = 100
@@ -53,7 +53,11 @@ def create_rhozz(phi,Bmag,scattering_in=True):
         print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
         return conductivityInstance.sigma,conductivityInstance.areasum
 
+<<<<<<< HEAD
     sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
+=======
+    sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=40)
+>>>>>>> 5258e78c6d193a67c19f7cfcb9e28f09e0601da5
     rhozzlist= [rho[2,2]*10e-5 for rho in rholist]
 
     endtime_global = time()
@@ -70,13 +74,21 @@ data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2511A/2511A_phi45_T30K_B4
 #generate data
 rhozzlist0 = create_rhozz(phi=0,Bmag=45,scattering_in=True)
 #rhozzlist0_withoutSCin = create_rhozz(phi=0,Bmag=45,scattering_in=False)
+<<<<<<< HEAD
 #rhozzlist45 = create_rhozz(phi=45,Bmag=45,scattering_in=True)
+=======
+rhozzlist45 = create_rhozz(phi=45,Bmag=45,scattering_in=True)
+>>>>>>> 5258e78c6d193a67c19f7cfcb9e28f09e0601da5
 
 #FSorbitsInstance.plotpoints()
 fig,axes = plt.subplots(nrows=1,ncols=2, figsize=(10, 5))
 
 axes[0].plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
+<<<<<<< HEAD
 #axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
+=======
+axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
+>>>>>>> 5258e78c6d193a67c19f7cfcb9e28f09e0601da5
 #axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
 axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
