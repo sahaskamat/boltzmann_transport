@@ -7,7 +7,7 @@ from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(-14,99,20)
+thetalist = np.linspace(-14,99,40)
 
 res_z = 20
 res_xy = 100
@@ -52,7 +52,7 @@ def create_rhozz(phi,Bmag,scattering_in=True):
         print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
         return conductivityInstance.sigma,conductivityInstance.areasum
 
-    sigmalist,rholist,arealist = makelist_serial(getsigma,thetalist)
+    sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=40)
     rhozzlist= [rho[2,2]*10e-5 for rho in rholist]
 
     endtime_global = time()
@@ -68,7 +68,7 @@ data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2511A/2511A_phi45_T35K_B4
 
 #generate data
 rhozzlist0 = create_rhozz(phi=0,Bmag=45,scattering_in=True)
-rhozzlist0_withoutSCin = create_rhozz(phi=0,Bmag=45,scattering_in=False)
+#rhozzlist0_withoutSCin = create_rhozz(phi=0,Bmag=45,scattering_in=False)
 rhozzlist45 = create_rhozz(phi=45,Bmag=45,scattering_in=True)
 
 #FSorbitsInstance.plotpoints()
@@ -76,7 +76,7 @@ fig,axes = plt.subplots(nrows=1,ncols=2, figsize=(10, 5))
 
 axes[0].plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
 axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
-axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+#axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
 axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
 axes[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )") 
@@ -85,7 +85,7 @@ axes[0].text(0.1,0.1,f"LSCO x=0.24\nT=30 K\nRes={res_z}x{res_xy}\nPancake Scatte
 axes[0].legend()
 
 axes[1].plot(thetalist,rhozzlist0/rhozzlist0[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
-axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+#axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
 axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-1],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[1].set_ylabel(r"$\rho_{zz}/\rho_{zz0}$") #($m\Omega$ cm )
 axes[1].set_xlabel(r'$\theta$')

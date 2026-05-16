@@ -10,13 +10,14 @@ import os
 
 plt.ion()
 
-def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipi",initialguess=(0.114,13.42,99.98,0.105,1.6595),bounds = Bounds([0.01,0,0,0.05,0],[0.12,30,1000,0.4,12]),parallel_over_theta="True"):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipi",initialguess=(0.114,13.42,99.98,0.105,1.6595),bounds = Bounds([0.01,0,0,0.05,0],[0.12,30,1000,0.4,12]),parallel_over_theta="True",plot=False):
     """
     Inputs: 
     scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
     initialguess (tuple of (tzmultvalue,**kwargs) to be passed to the global optimizer as an initial guess)
     bounds (instance of type scipy.optimize.Bounds that specifies search space for solutions)
     parallel_over_theta (bool, if True, values of resistivity are calculated paralelly for all values of theta. If False, values are calculated paralelly over all generations)
+    plot (bool, if True, fit is plotted at each costfunction evaluation.)
     """
 
     T = temp
@@ -64,7 +65,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
                 #print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
                 return conductivityInstance.sigma,conductivityInstance.areasum
 
-            if parallel_over_theta: sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist)
+            if parallel_over_theta: sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=20)
             else: sigmalist,rholist,arealist = makelist_serial(getsigma,thetalist)
 
             rhozzlist= [rho[2,2]*10e-5 for rho in rholist]
@@ -76,16 +77,17 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
 
         cost = np.sum((rhozz0list - data_rhozz0_interp)**2) + np.sum((rhozz45list - data_rhozz45_interp)**2)
 
-        plt.clf()
-        plt.plot(thetalist,rhozz0list,ls="-",marker="o",ms=2)
-        plt.plot(thetalist,rhozz45list,ls="-",marker="o",ms=2)
-        plt.plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2)
-        plt.plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2)
-        plt.ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
-        plt.xticks([0,45,90])
-        plt.xlabel(r'$\theta$')
-        plt.show(block=False)
-        plt.pause(0.1)
+        if plot:
+            plt.clf()
+            plt.plot(thetalist,rhozz0list,ls="-",marker="o",ms=2)
+            plt.plot(thetalist,rhozz45list,ls="-",marker="o",ms=2)
+            plt.plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2)
+            plt.plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2)
+            plt.ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
+            plt.xticks([0,45,90])
+            plt.xlabel(r'$\theta$')
+            plt.show(block=False)
+            plt.pause(0.1)
 
         file_path = f"fitting/fit_logs/fit_logs_nonRTA/fit_logs_{doping}perc_{T}K_{scatteringmodel}.txt"
         if os.path.exists(file_path):
@@ -105,8 +107,8 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         return cost
     
     """Differential evolution"""
-    if parallel_over_theta: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=10000)
-    else: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=10000,workers=-1)
+    if parallel_over_theta: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=500)
+    else: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=10,maxiter=500,workers=60)
 
     return res.x
 
