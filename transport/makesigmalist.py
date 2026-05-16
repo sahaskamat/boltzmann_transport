@@ -10,7 +10,7 @@ except NotImplementedError:
 
 if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
 
-def makelist_parallel(sigmaarea_function,inputslist,workers=cpus):
+def makelist_parallel(sigmaarea_function,inputslist,workers=cpus/2):
     """
     Inputs:
     function (lambda function that returns the conductivity tensor and area sigma,area after taking in one input)
@@ -22,7 +22,7 @@ def makelist_parallel(sigmaarea_function,inputslist,workers=cpus):
     Outputs: sigmalist,rholist,arealist
     """
     #execute sigma_function paralelly over thetalist to obtain sigmas and areas
-    sigmaarealist = Parallel(n_jobs=int(cpus/2))(delayed(sigmaarea_function)(inputinstance) for inputinstance in inputslist)
+    sigmaarealist = Parallel(n_jobs=int(workers))(delayed(sigmaarea_function)(inputinstance) for inputinstance in inputslist)
 
     sigmalist = [sigmaarealist[i][0] for i in range(len(sigmaarealist))]
     arealist = [sigmaarealist[i][1] for i in range(len(sigmaarealist))]
