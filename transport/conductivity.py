@@ -153,7 +153,7 @@ class Conductivity:
 
     def createAmatrix_Bdependent(self,B):
         #creates a sparse matrix self.A_Bdependent that is added to self.A_Bindependent to get the total self.A (total scattering-matrix)
-        self.A_Bdependent = sp.sparse.lil_matrix((self.n,self.n))
+        self.A_Bdependent = np.zeros((self.n,self.n))
 
         if np.linalg.norm(B) == 0:
             #no terms to be added if B=0
@@ -194,8 +194,6 @@ class Conductivity:
             self.A_Bdependent[Amatrixpositions,prev_Amatrixpositions_outofplane] += -graddata_outofplane
 
             i += 1
-
-        self.A_Bdependent = self.A_Bdependent.tocsr()
 
 
     def createAlpha(self,gmres=False):
