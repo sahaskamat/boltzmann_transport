@@ -139,12 +139,26 @@ class Conductivity:
                 self.A_Bindependent[Amatrixposition_row,:] = self.A_Bindependent[Amatrixposition_row,:] - row_to_add #add this row to the A matrix
         
 
+    def LUdecomp(self,B):
+        #performs an LU decomposition on self.A_Bindependent + self.A_Bdependent(B) for a certain magnetic field that is used to speed up future solves. B can be zero.
+        self.createAmatrix_Bdependent(B)
+        lu,piv = sp.linalg.lu_factor(self.A_Bindependent+self.A_Bdependent)
+        print("LU decomposition completed")
+
+        #create a scipy "Linear Operator" that solves self.A_Bindependent*x = b, given b. Approximately returns self.A^-1 @ b. Used to precondition GMRES solver
+        def preconditioner(b):
+            return sp.linalg.lu_solve((lu,piv),b) 
+        
+        self.preconditioner_LO = sp.sparse.linalg.LinearOperator(shape=(self.n,self.n),matvec=preconditioner,dtype=np.float64)
+
     def createAmatrix_Bdependent(self,B):
+        #creates a sparse matrix self.A_Bdependent that is added to self.A_Bindependent to get the total self.A (total scattering-matrix)
+        self.A_Bdependent = sp.sparse.lil_matrix((self.n,self.n))
+
         if np.linalg.norm(B) == 0:
-            self.A = np.copy(self.A_Bindependent)
+            #no terms to be added if B=0
             return
 
-        self.A = np.copy(self.A_Bindependent) #create a copy of the B independent Amatrix to populate with B dependent terms
         self.B = B
         crosslist  = np.cross(self.dedk_list,self.B) #crosslist[i]  = dedk(state[i]) x B
         dotlist_inplane = np.sum(crosslist*self.deltaparray_inplane_unitvectors,axis=1) #dotlist_inplane[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])
@@ -167,8 +181,8 @@ class Conductivity:
 
                 graddata_inplane = graddatalist_inplane[Amatrixposition]
 
-                self.A[Amatrixposition,next_Amatrixposition_inplane] += graddata_inplane
-                self.A[Amatrixposition,prev_Amatrixposition_inplane] += -graddata_inplane
+                self.A_Bdependent[Amatrixposition,next_Amatrixposition_inplane] += graddata_inplane
+                self.A_Bdependent[Amatrixposition,prev_Amatrixposition_inplane] += -graddata_inplane
 
                 #off diagonal terms that simulate the derivative term from the boltzmann equation, out of plane
                 next_Amatrixposition_outofplane = self.Amatrixpositionlist[(i+1)%n,j]
@@ -176,32 +190,37 @@ class Conductivity:
 
                 graddata_outofplane = graddatalist_outofplane[Amatrixposition]
 
-                self.A[Amatrixposition,next_Amatrixposition_outofplane] += graddata_outofplane
-                self.A[Amatrixposition,prev_Amatrixposition_outofplane] += -graddata_outofplane
+                self.A_Bdependent[Amatrixposition,next_Amatrixposition_outofplane] += graddata_outofplane
+                self.A_Bdependent[Amatrixposition,prev_Amatrixposition_outofplane] += -graddata_outofplane
 
                 j += 1
             i += 1
 
-
-        #now add in scattering in terms coming from forward scattering
-
-        #first create matrix whose {i,j} element is {k_i,k_j}, which will be an input to the scattering-in formula
-        plist = np.concatenate(self.FSorbitsInstance.FSorbits) #list of all momentum vectors in correct order
-
-        indices = np.indices([self.n,self.n]) #list of indices {i,j} to be extracted from plist
-
-        pi_minus_pj = (plist[indices])[0] - (plist[indices])[1] #the i,jth element of this matrix is p_i - p_j (directly features into the scattering in matrix)
+        self.A_Bdependent = self.A_Bdependent.tocsr()
 
 
-    def createAlpha(self):
+    def createAlpha(self,gmres=False):
+        if gmres:
+            #create a scipy "LinearOperator (LO)" object that takes returns self.A @ x (where x is an input)
+            def A_times_x(x): 
+                return self.A_Bdependent@x + self.A_Bindependent@x #returns self.A@x
+            
+            A_times_x_LO = sp.sparse.linalg.LinearOperator(shape=(self.n,self.n),matvec=A_times_x,dtype=np.float64) #converts A_times_x to LO object
+
+            #solve self.A@self.alpha = self.dedk_list using GMRES
+            self.alpha = np.empty_like(self.dedk_list)
+            
+            for i in range(3):
+                self.alpha[:,i], info = sp.sparse.linalg.bicgstab(A_times_x_LO,b=self.dedk_list[:,i],M=self.preconditioner_LO)
+            if info>0:print(info) #print number of iterations if convergence tolerance not reached
+        else:
+            self.A = self.A_Bdependent + self.A_Bindependent
+            self.alpha = sp.linalg.solve(self.A,self.dedk_list)
+
+    def createSigma(self):
         #creates an array of the cartesian components of the velocity at each point on the discretized fermi surface
         self.moddedk_array = self.dedk_list/np.linalg.norm(self.dedk_list,axis=1)[:,None]
 
-        #multiply Ainv with the ath component of dedk to obtain alpha
-        #multiplying by Ainv directly replaced by solving the equation
-        self.alpha = sp.linalg.solve(self.A,self.dedk_list)
-
-    def createSigma(self):
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])

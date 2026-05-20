@@ -9,8 +9,8 @@ from time import time
 starttime_global = time()
 thetalist = np.linspace(-14,99,20)
 
-res_z = 40
-res_xy = 200
+res_z = 20
+res_xy = 100
 
 
 #0.08092599477597432,11.26784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975667416478
@@ -37,6 +37,7 @@ print(f"Doping={FSorbitsInstance.calculateDoping()}")
 
 def create_rhozz(phi,Bmag,scattering_in=True):
     phi_rad = np.deg2rad(phi)
+    B_for_LU = [Bmag*np.sin(np.deg2rad(70))*np.cos(phi_rad),Bmag*np.sin(np.deg2rad(70))*np.sin(phi_rad),Bmag*np.cos(np.deg2rad(70))]
     if scattering_in: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,plotScattering=plotScattering)
     else: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,plotScattering=plotScattering)
     starttime = time()
@@ -44,24 +45,21 @@ def create_rhozz(phi,Bmag,scattering_in=True):
     conductivityInstance.create_Hfunc(scatteringmodel="pipizero",strength=strength,spread_xy=spread_xy,spread_z=spread_z,n=n)
     conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
     if scattering_in: conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
+    #conductivityInstance.LUdecomp(B_for_LU)
     endtime = time()
     print(f"Time taken to create B independent Amatrix =  {endtime - starttime}")
 
     def getsigma(theta,Bmag=Bmag):
         B = [Bmag*np.sin(np.deg2rad(theta))*np.cos(phi_rad),Bmag*np.sin(np.deg2rad(theta))*np.sin(phi_rad),Bmag*np.cos(np.deg2rad(theta))]
         conductivityInstance.createAmatrix_Bdependent(B)
-        conductivityInstance.createAlpha()
+        conductivityInstance.createAlpha(gmres=False)
         conductivityInstance.createSigma()
 
         print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
         return conductivityInstance.sigma,conductivityInstance.areasum
 
 
-<<<<<<< HEAD
     sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=5)
-=======
-    sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=20)
->>>>>>> a5b2c2e58dca3a7ffa50449a5b3d8ef7dea2ba45
     sigma_zero,area_zero = getsigma(theta=0,Bmag=0)
     sigma_9T,area_9T = getsigma(theta=0,Bmag=9)
 
