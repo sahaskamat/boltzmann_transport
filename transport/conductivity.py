@@ -30,7 +30,7 @@ class Conductivity:
         #create A matrix to populate with numbers:
         self.A_Bindependent = np.zeros((self.n,self.n))
 
-        #Amatrixpositionlist[i,j] gives the row (or column) in self.A that corresponds to state self.orbitsInstance.orbitsEQS[i][j]
+        #Amatrixpositionlist[i,j] or Amatrixposition(i,j) gives the row (or column) in self.A that corresponds to state self.orbitsInstance.orbitsEQS[i][j]
         self.Amatrixpositionlist = np.arange(0, self.FSorbitsInstance.n_points*self.FSorbitsInstance.n_cuts).reshape(self.FSorbitsInstance.n_points, self.FSorbitsInstance.n_cuts)
 
         #find state[i+1] - state[i-1] for states as you traverse an "in-plane" orbit, then compute their norms and unit vectors used to compute gradients
@@ -166,34 +166,33 @@ class Conductivity:
         graddatalist_inplane = dotlist_inplane/(self.deltaparray_inplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1])
         graddatalist_outofplane = dotlist_outofplane/(self.deltaparray_outofplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1]) for out of plane states
 
-        i=0 #i and j correspond to the ith orbit and jth state on that orbit that is being iterated
+        i=0 #i corresponds to the ith orbit that is being iterated
         n = len(self.FSorbitsInstance.FSorbits) #n is the number of orbits
         for orbit in self.FSorbitsInstance.FSorbits:
             m = len(orbit) #m is the number of states on the current orbit
-            j=0
 
-            for state in orbit:
-                Amatrixposition = self.Amatrixpositionlist[i,j]
+            stateindices = np.arange(m) #stateindex[i] corresponds to the ith state on orbit
 
-                #off diagonal terms that simulate the derivative term from the boltzmann equation, in plane
-                next_Amatrixposition_inplane = self.Amatrixpositionlist[i,(j+1)%m]
-                prev_Amatrixposition_inplane = self.Amatrixpositionlist[i,(j-1)%m]
+            Amatrixpositions = self.Amatrixpositionlist[i,stateindices] #Amatrixpositions[i] corresponds to the index of stateindex[i] in the Amatrix
 
-                graddata_inplane = graddatalist_inplane[Amatrixposition]
+            #off diagonal terms that simulate the derivative term from the boltzmann equation, in plane
+            next_Amatrixpositions_inplane = self.Amatrixpositionlist[i,(stateindices+1)%m] #next_Amatrixpositions_inplane[i] corresponds to index of the next in plane state to stateindex[i] in the Amatrix
+            prev_Amatrixpositions_inplane = self.Amatrixpositionlist[i,(stateindices-1)%m] #prev_Amatrixpositions_inplane[i] corresponds to index of the previous in plane state to stateindex[i] in the Amatrix
 
-                self.A_Bdependent[Amatrixposition,next_Amatrixposition_inplane] += graddata_inplane
-                self.A_Bdependent[Amatrixposition,prev_Amatrixposition_inplane] += -graddata_inplane
+            graddata_inplane = graddatalist_inplane[Amatrixpositions] #graddata_inplane[i] corresponds to the derivative term in plane for stateindex[i]
 
-                #off diagonal terms that simulate the derivative term from the boltzmann equation, out of plane
-                next_Amatrixposition_outofplane = self.Amatrixpositionlist[(i+1)%n,j]
-                prev_Amatrixposition_outofplane = self.Amatrixpositionlist[(i-1)%n,j]
+            self.A_Bdependent[Amatrixpositions,next_Amatrixpositions_inplane] += graddata_inplane
+            self.A_Bdependent[Amatrixpositions,prev_Amatrixpositions_inplane] += -graddata_inplane
 
-                graddata_outofplane = graddatalist_outofplane[Amatrixposition]
+            #off diagonal terms that simulate the derivative term from the boltzmann equation, out of plane
+            next_Amatrixpositions_outofplane = self.Amatrixpositionlist[(i+1)%n,stateindices]
+            prev_Amatrixpositions_outofplane = self.Amatrixpositionlist[(i-1)%n,stateindices]
 
-                self.A_Bdependent[Amatrixposition,next_Amatrixposition_outofplane] += graddata_outofplane
-                self.A_Bdependent[Amatrixposition,prev_Amatrixposition_outofplane] += -graddata_outofplane
+            graddata_outofplane = graddatalist_outofplane[Amatrixpositions]
 
-                j += 1
+            self.A_Bdependent[Amatrixpositions,next_Amatrixpositions_outofplane] += graddata_outofplane
+            self.A_Bdependent[Amatrixpositions,prev_Amatrixpositions_outofplane] += -graddata_outofplane
+
             i += 1
 
         self.A_Bdependent = self.A_Bdependent.tocsr()
