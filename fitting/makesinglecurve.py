@@ -57,7 +57,11 @@ def create_rhozz(phi,Bmag,scattering_in=True):
         return conductivityInstance.sigma,conductivityInstance.areasum
 
 
+<<<<<<< HEAD
     sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=5)
+=======
+    sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=20)
+>>>>>>> a5b2c2e58dca3a7ffa50449a5b3d8ef7dea2ba45
     sigma_zero,area_zero = getsigma(theta=0,Bmag=0)
     sigma_9T,area_9T = getsigma(theta=0,Bmag=9)
 
