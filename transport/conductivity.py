@@ -211,7 +211,7 @@ class Conductivity:
             self.alpha = np.empty_like(self.dedk_list)
             
             for i in range(3):
-                self.alpha[:,i], info = sp.sparse.linalg.bicgstab(A_times_x_LO,b=self.dedk_list[:,i],M=self.preconditioner_LO)
+                self.alpha[:,i], info = sp.sparse.linalg.gmres(A_times_x_LO,b=self.dedk_list[:,i],M=self.preconditioner_LO)
             if info>0:print(info) #print number of iterations if convergence tolerance not reached
         else:
             self.A = self.A_Bdependent + self.A_Bindependent
