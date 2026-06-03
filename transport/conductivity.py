@@ -139,18 +139,6 @@ class Conductivity:
                 self.A_Bindependent[Amatrixposition_row,:] = self.A_Bindependent[Amatrixposition_row,:] - row_to_add #add this row to the A matrix
         
 
-    def LUdecomp(self,B):
-        #performs an LU decomposition on self.A_Bindependent + self.A_Bdependent(B) for a certain magnetic field that is used to speed up future solves. B can be zero.
-        self.createAmatrix_Bdependent(B)
-        lu,piv = sp.linalg.lu_factor(self.A_Bindependent+self.A_Bdependent)
-        print("LU decomposition completed")
-
-        #create a scipy "Linear Operator" that solves self.A_Bindependent*x = b, given b. Approximately returns self.A^-1 @ b. Used to precondition GMRES solver
-        def preconditioner(b):
-            return sp.linalg.lu_solve((lu,piv),b) 
-        
-        self.preconditioner_LO = sp.sparse.linalg.LinearOperator(shape=(self.n,self.n),matvec=preconditioner,dtype=np.float64)
-
     def createAmatrix_Bdependent(self,B):
         #creates a sparse matrix self.A_Bdependent that is added to self.A_Bindependent to get the total self.A (total scattering-matrix)
         self.A_Bdependent = np.zeros((self.n,self.n))
@@ -196,19 +184,15 @@ class Conductivity:
             i += 1
 
 
-    def createAlpha(self,gmres=False):
-        if gmres:
-            #create a scipy "LinearOperator (LO)" object that takes returns self.A @ x (where x is an input)
-            def A_times_x(x): 
-                return self.A_Bdependent@x + self.A_Bindependent@x #returns self.A@x
-            
-            A_times_x_LO = sp.sparse.linalg.LinearOperator(shape=(self.n,self.n),matvec=A_times_x,dtype=np.float64) #converts A_times_x to LO object
-
+    def createAlpha(self,initial_guess=None):
+        """Calculates alpha. If initial_guess is supplied, uses GMRES with initial_guess as x0."""
+        if initial_guess is not None:
             #solve self.A@self.alpha = self.dedk_list using GMRES
+            self.A = self.A_Bdependent + self.A_Bindependent
             self.alpha = np.empty_like(self.dedk_list)
             
             for i in range(3):
-                self.alpha[:,i], info = sp.sparse.linalg.gmres(A_times_x_LO,b=self.dedk_list[:,i],M=self.preconditioner_LO)
+                self.alpha[:,i], info = sp.sparse.linalg.gmres(self.A,b=self.dedk_list[:,i],x0=initial_guess[:,i],rtol=1e-4)
             if info>0:print(info) #print number of iterations if convergence tolerance not reached
         else:
             self.A = self.A_Bdependent + self.A_Bindependent
@@ -253,7 +237,7 @@ class Conductivity:
 
                 ax1.scatter(theta,dgdt_out+self.invtau_iso,color=f"C{id}",s=5)
                 ax1.scatter(theta,10+189.85506941378708*np.cos(2*theta)**12,color=f"black",s=5)
-                #ax1_twin.scatter(theta,vz,color=f"C{id+4}",s=5,marker="v")
+                ax1_twin.scatter(theta,vz,color=f"C{id+4}",s=5,marker="v")
 
                 ax2.scatter(state[0],state[1],color=f"C{id}",s=5)
                 ax3.scatter(theta,dos,color=f"C{id}",s=5)
