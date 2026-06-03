@@ -54,3 +54,30 @@ def makelist_serial(sigmaarea_function,inputslist):
         rholist.append(np.linalg.inv(sigma))
 
     return sigmalist,rholist,arealist
+
+def makelist_propogate(sigmaarea_function,inputslist):
+    """
+    Inputs:
+    function (lambda function that returns the conductivity tensor and area sigma,area,alpha after taking in one input and an initial_guess)
+    inputslist (list of inputs over which function is calculated)
+
+    Makes list of conductivity tensors by repeatedly applying function to inputslist serially, using previous alpha value as an initial guess
+
+    Outputs: sigmalist,rholist,arealist
+    """
+    #execute sigma_function serially over thetalist to obtain sigmas and areas
+    sigmaarealist = []
+    initial_guess=None
+
+    for input in inputslist:
+        sigma,area,initial_guess = sigmaarea_function(input,initial_guess=initial_guess)
+        sigmaarealist.append([sigma,area])
+
+    sigmalist = [sigmaarealist[i][0] for i in range(len(sigmaarealist))]
+    arealist = [sigmaarealist[i][1] for i in range(len(sigmaarealist))]
+
+    rholist = [] #invert sigmas to find rhos
+    for sigma in sigmalist:
+        rholist.append(np.linalg.inv(sigma))
+
+    return sigmalist,rholist,arealist

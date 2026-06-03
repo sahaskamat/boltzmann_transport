@@ -6,11 +6,12 @@ import transport.conductivity as conductivity
 from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
 from scipy.optimize import differential_evolution,Bounds
+from multiprocessing.pool import ThreadPool
 import os
 
 plt.ion()
 
-def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipizero",initialguess=(0.11254623711633413,13.64440988094479,83.15247343896175,0.10296026520227448,0.1,1.5230931197615067),bounds = Bounds([0.01,0,0,0.05,0.05,0],[0.12,30,1000,0.4,0.4,12]),parallel_over_theta="True",plot=False):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipizero_plus_fwd",initialguess=(0.11254623711633413,13.64440988094479,83.15247343896175,0.10296026520227448,0.1,1.5230931197615067,0,1,1),bounds = Bounds([0.01,0,0,0.05,0.05,0,0,0.2,0.1],[0.12,30,1000,0.4,0.4,12.0,5,1,1]),parallel_over_theta="True",plot=False):
     """
     Inputs: 
     scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
@@ -39,7 +40,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
     data_rhozz45_interp = np.interp(thetalist,data_theta45,data_rhozz45)
 
     def costfunction(params):
-        Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n = np.abs(params)
+        Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n,strength_fwd,spread_xy_fwd,spread_z_fwd = np.abs(params)
 
         dispersionInstance = dispersion.LSCOdispersion(T=fixedparams[0],T1multvalue=fixedparams[1],T11multvalue=fixedparams[2],Tzmultvalue=Tzmultvalue,mumultvalue=fixedparams[3])
 
@@ -52,7 +53,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
 
             conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso)
             conductivityInstance.createAmatrix_Bindependent_isotropic()
-            conductivityInstance.create_Hfunc(scatteringmodel=scatteringmodel,strength=strength,spread_xy=spread_xy,spread_z=spread_z,n=n)
+            conductivityInstance.create_Hfunc(scatteringmodel=scatteringmodel,strength=strength,spread_xy=spread_xy,spread_z=spread_z,n=n,strength_fwd=strength_fwd,spread_xy_fwd=spread_xy_fwd,spread_z_fwd=spread_z_fwd)
             conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
             conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
 
@@ -65,7 +66,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
                 #print(f"Theta={theta}. Calculated total area: {conductivityInstance.areasum}. Number of orbits used {len(conductivityInstance.FSorbitsInstance.FSorbits)}. Size of Amatrix: {conductivityInstance.n}")
                 return conductivityInstance.sigma,conductivityInstance.areasum
 
-            if parallel_over_theta: sigmalist,rholist,arealist = makelist_parallel(getsigma,thetalist,workers=20)
+            if parallel_over_theta: sigmalist,rholist,arealist = makelist_serial(getsigma,thetalist)
             else: sigmalist,rholist,arealist = makelist_serial(getsigma,thetalist)
 
             rhozzlist= [rho[2,2]*10e-5 for rho in rholist]
@@ -92,23 +93,25 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         file_path = f"fitting/fit_logs/fit_logs_nonRTA/fit_logs_{doping}perc_{T}K_{scatteringmodel}.txt"
         if os.path.exists(file_path):
             with open(file_path,"a") as f:
-                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n}")
+                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n},{strength_fwd},{spread_xy_fwd},{spread_z_fwd}\n")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n},strength_fwd={strength_fwd},spread_xy_fwd={spread_xy_fwd},spread_z_fwd={spread_z_fwd}")
         else:
             with open(file_path,"w") as f:
                     f.write(f"LSCO {sample}, x = {doping}%\n")
                     f.write(f"T={T} K, B = {field} T, theta= {theta_min} to {theta_max}, phi = 0 and 45\n")
                     f.write("Fixed parameters:\n")
                     f.write(f"T={fixedparams[0]},T1multvalue={fixedparams[1]},T11multvalue={fixedparams[2]}\n")
-                    f.write("cost,Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n\n")
-                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n}")
+                    f.write("cost,Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n,strength_fwd,spread_xy_fwd,spread_z_fwd\n")
+                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n},{strength_fwd},{spread_xy_fwd},{spread_z_fwd}\n")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n},strength_fwd={strength_fwd},spread_xy_fwd={spread_xy_fwd},spread_z_fwd={spread_z_fwd}")
 
         return cost
     
     """Differential evolution"""
     if parallel_over_theta: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=5,maxiter=10000)
-    else: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=5,maxiter=10000,workers=60)
+    else: 
+         pool = ThreadPool(4)
+         res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=4,maxiter=10000,workers=pool.map,updating="deferred")
 
     return res.x
 
