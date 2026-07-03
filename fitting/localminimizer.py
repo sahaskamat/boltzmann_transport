@@ -10,7 +10,7 @@ import os
 
 plt.ion()
 
-def fit_data(sample="2601C",doping="22",temp=30,theta_max=99,field=45.0,fixedparams=(190e-3,-0.134,0.067,0.805),scatteringmodel="pipizero",initialguess=(0.08072599477597432,12.56784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975767416477),plot=True):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipidelta",initialguess=(0.03411,9.9,120000,0.1235,3.4),plot=True):
     """
     Inputs: 
     scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
@@ -39,7 +39,7 @@ def fit_data(sample="2601C",doping="22",temp=30,theta_max=99,field=45.0,fixedpar
     data_rhozz45_interp = np.interp(thetalist,data_theta45,data_rhozz45)
 
     def costfunction(params):
-        Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n = np.abs(params)
+        Tzmultvalue,invtau_iso,strength,spread_xy,n = np.abs(params)
 
         dispersionInstance = dispersion.LSCOdispersion(T=fixedparams[0],T1multvalue=fixedparams[1],T11multvalue=fixedparams[2],Tzmultvalue=Tzmultvalue,mumultvalue=fixedparams[3])
 
@@ -50,9 +50,9 @@ def fit_data(sample="2601C",doping="22",temp=30,theta_max=99,field=45.0,fixedpar
         def create_rhozz(phi,Bmag):
             phi_rad = np.deg2rad(phi)
 
-            conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso)
+            conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,delta_in_k=True)
             conductivityInstance.createAmatrix_Bindependent_isotropic()
-            conductivityInstance.create_Hfunc(scatteringmodel=scatteringmodel,strength=strength,spread_xy=spread_xy,spread_z=spread_z,n=n)
+            conductivityInstance.create_Hfunc(scatteringmodel=scatteringmodel,strength=strength,spread_xy=spread_xy,n=n)
             conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
             conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
 
@@ -92,7 +92,7 @@ def fit_data(sample="2601C",doping="22",temp=30,theta_max=99,field=45.0,fixedpar
         if os.path.exists(file_path):
             with open(file_path,"a") as f:
                     #f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n}")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},n={n}")
         else:
             with open(file_path,"w") as f:
                     #f.write(f"LSCO {sample}, x = {doping}%\n")
@@ -101,7 +101,7 @@ def fit_data(sample="2601C",doping="22",temp=30,theta_max=99,field=45.0,fixedpar
                     #f.write(f"T={fixedparams[0]},T1multvalue={fixedparams[1]},T11multvalue={fixedparams[2]}\n")
                     #f.write("cost,Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n\n")
                     #f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{spread_z},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},spread_z={spread_z},n={n}")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},n={n}")
 
         return cost
     

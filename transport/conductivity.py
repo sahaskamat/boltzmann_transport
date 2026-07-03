@@ -3,6 +3,10 @@ import scipy as sp
 import transport.dispersion as dispersion
 from time import time
 
+def kronecker_delta(x,y,atol=1e-5):
+    """Takes in two numbers and returns 1 if they are the same, 0 otherwise"""
+    return np.isclose(x,y,atol=atol).astype(int)
+
 class Conductivity:
     """
     Inputs:
@@ -12,11 +16,11 @@ class Conductivity:
 
     Contains methods to calculate the Amatrix, alpha, and sigma
     """
-    def __init__(self,dispersionInstance,FSorbitsInstance,invtau_iso = 12.595,plotScattering=False):
+    def __init__(self,dispersionInstance,FSorbitsInstance,invtau_iso = 12.595,delta_in_k=False):
         self.dispersionInstance = dispersionInstance
         self.FSorbitsInstance = FSorbitsInstance
         self.invtau_iso = invtau_iso #isotropic scattering rate
-        self.plotScattering = plotScattering
+        self.delta_in_k  =delta_in_k
 
     def createAmatrix_Bindependent_isotropic(self):
         """
@@ -57,6 +61,12 @@ class Conductivity:
         #list of fermi surface areas associated with each point
         self.patcharealist = (self.deltaparray_inplane_norms*self.deltaparray_outofplane_norms)/4
 
+        #list of in-plane fermi surface lengths associated with each point
+        self.inplanelengthlist = self.deltaparray_inplane_norms/2
+
+        #scattering out list used for diagnostic plot
+        self.dgdt_out_list = np.zeros_like(self.patcharealist)
+
         #creates a list of states in the same order as they would appear in the double loop
         self.stateslist = np.array([state for orbit in self.FSorbitsInstance.FSorbits for state in orbit]) #stateslist[i] = ith state
         self.invtau_iso_list = np.ones(len(self.stateslist))*self.invtau_iso #invtau_iso_list[i] = isotropic scattering rate at state i
@@ -75,6 +85,9 @@ class Conductivity:
 
     def create_Hfunc(self,scatteringmodel,**kwargs):
         """
+        Inputs:
+        scatteringmodel (string corresponding to a function name from scattering_kernels.py)
+
         Creates a function self.H_func(k,k') that takes in k (3-vector) and k' (list of 3-vectors) and outputs a list of scattering matrix elements
         Each matrix element corresponds to a 3-vector in k'
         """
@@ -108,23 +121,22 @@ class Conductivity:
 
         #first create the scattering out terms
 
-        #scattering out list used for diagnostic plot
-        dgdt_out_list = []
-
         #i and j correspond to the ith orbit and jth state on that orbit that is being iterated
         for i,orbit in enumerate(self.FSorbitsInstance.FSorbits):
             for j,state in enumerate(orbit):
                 #diagonal term coming from scattering out
                 Amatrixposition = self.Amatrixpositionlist[i,j]
                 
-                Hlist = self.H_func(state,self.stateslist) #creates a list of H(k,k') where k is the state being iterated and k' are all the other states
-                dgdt_out = np.sum((Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1)) #dgdt_out = sum(patcharea(k')*H(k,k')/dEdk(k'))
+                if self.delta_in_k:
+                    Hlist = self.H_func(state,self.stateslist)*kronecker_delta(state[2],self.stateslist[:,2]) #creates a list of H(k,k') where k is the state being iterated and k' are all the other states, but only if their kz are equal
+                    dgdt_out = np.sum((Hlist*self.inplanelengthlist)/np.linalg.norm(self.dedk_list[:,:2],axis=1)) #dgdt_out = sum(inplanelength(k')*H(k,k')/dEdk(inplane k'))
+                else:
+                    Hlist = self.H_func(state,self.stateslist) #creates a list of H(k,k') where k is the state being iterated and k' are all the other states
+                    dgdt_out = np.sum((Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1)) #dgdt_out = sum(patcharea(k')*H(k,k')/dEdk(k'))
 
                 self.A_Bindependent[Amatrixposition,Amatrixposition] += dgdt_out
-                dgdt_out_list.append(dgdt_out)
+                self.dgdt_out_list[Amatrixposition] += (dgdt_out)
 
-        if self.plotScattering:
-            self.plotScatteringOut(dgdt_out_list)
 
     def createAmatrix_Bindependent_fwdscatter_in(self):
         #now create scattering in terms
@@ -134,10 +146,14 @@ class Conductivity:
             for j_row,state_row in enumerate(orbit_row):
                 Amatrixposition_row = self.Amatrixpositionlist[i_row,j_row] 
 
-                Hlist = self.H_func(state_row,self.stateslist)
-                row_to_add = (Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1) #computes the scattering in terms on this row of amatrix
+                if self.delta_in_k:
+                    Hlist = self.H_func(state_row,self.stateslist)*kronecker_delta(state_row[2],self.stateslist[:,2]) #scattering term is only non-zero if both states have the same kz
+                    row_to_add = (Hlist*self.inplanelengthlist)/np.linalg.norm(self.dedk_list[:,:2],axis=1) #computes the scattering in terms on this row of amatrix
+                else:
+                    Hlist = self.H_func(state_row,self.stateslist)
+                    row_to_add = (Hlist*self.patcharealist)/np.linalg.norm(self.dedk_list,axis=1) #computes the scattering in terms on this row of amatrix
+                    
                 self.A_Bindependent[Amatrixposition_row,:] = self.A_Bindependent[Amatrixposition_row,:] - row_to_add #add this row to the A matrix
-        
 
     def createAmatrix_Bdependent(self,B):
         #creates a sparse matrix self.A_Bdependent that is added to self.A_Bindependent to get the total self.A (total scattering-matrix)
@@ -214,7 +230,8 @@ class Conductivity:
 
         self.areasum = np.sum(self.patcharealist)
 
-    def plotScatteringOut(self,dgdt_out_list):
+    def plotScatteringOut(self):
+        dgdt_out_list = self.dgdt_out_list
         #creates a plot of scattering out rate vs angle
         import matplotlib.pyplot as plt
         fig= plt.figure(figsize=(15, 5))

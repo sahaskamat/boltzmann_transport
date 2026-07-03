@@ -16,12 +16,12 @@ res_xy = 100
 #0.08092599477597432,11.26784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975667416478
 
 #0.08803848932294113,0.41445800233548447,140.3929311204074,0.08340318765132346,0.2731068119348874,1.9755450186340013,2.531892490692818,0.2446595289952605,0.7457752153124259
-Tzmultvalue,invtau_iso,strength,spread_xy,spread_z,n = 0.03,11,2,0.105,0.0000001,2
-mumultvalue=0.81
+Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.0325,9,50000000,0.143,6.3
+mumultvalue=0.805
 
 plotScattering=False
 
-dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.132,T11multvalue=0.066,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
+dispersionInstance = dispersion.LSCOdispersion(T= 190e-3,T1multvalue=-0.134,T11multvalue=0.067,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
 FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
 starttime = time()
 FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
@@ -32,13 +32,13 @@ print(f"Doping={FSorbitsInstance.calculateDoping()}")
 def create_rhozz(phi,Bmag,scattering_in=True,plotScattering=plotScattering):
     phi_rad = np.deg2rad(phi)
     B_for_LU = [Bmag*np.sin(np.deg2rad(70))*np.cos(phi_rad),Bmag*np.sin(np.deg2rad(70))*np.sin(phi_rad),Bmag*np.cos(np.deg2rad(70))]
-    if scattering_in: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,plotScattering=plotScattering)
-    else: conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,plotScattering=plotScattering)
+    conductivityInstance = conductivity.Conductivity(dispersionInstance,FSorbitsInstance,invtau_iso=invtau_iso,delta_in_k=True)
     starttime = time()
     conductivityInstance.createAmatrix_Bindependent_isotropic()
-    conductivityInstance.create_Hfunc(scatteringmodel="pipizero",strength=strength,spread_xy=spread_xy,spread_z=spread_z,n=n)
+    conductivityInstance.create_Hfunc(scatteringmodel="pipidelta",strength=strength,spread_xy=spread_xy,n=n)
     conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
     if scattering_in: conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
+    if plotScattering: conductivityInstance.plotScatteringOut()
     #conductivityInstance.LUdecomp(B_for_LU)
     endtime = time()
     print(f"Time taken to create B independent Amatrix =  {endtime - starttime}")
@@ -72,8 +72,8 @@ def create_rhozz(phi,Bmag,scattering_in=True,plotScattering=plotScattering):
 #p.savetxt("rhoxyvstPhi"+str(phi)+".dat",np.transpose([thetalist,rhoxylist]))
 
 #load data
-data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2511A/2511A_phi0_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2511A/2511A_phi45_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2601C/2601C_phi0_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2601C/2601C_phi45_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 
 #generate data
 rhozzlist0 = create_rhozz(phi=0,Bmag=45,scattering_in=True)
@@ -90,7 +90,7 @@ axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
 axes[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )") 
 axes[0].set_xlabel(r'$\theta$')
-axes[0].text(0.1,0.1,f"LSCO x=0.22\nT=35 K\nRes={res_z}x{res_xy}\n$\pi-\pi$ scatterers + isotropic\n$t_z = 0.06 - 0.08$",fontsize=10, transform=axes[0].transAxes)
+axes[0].text(0.1,0.1,f"LSCO x=0.24\nT=35 K\nRes={res_z}x{res_xy}\n$\pi-\pi-\delta(q_z)$ scatterers + isotropic\n$t_z = 0.03$",fontsize=10, transform=axes[0].transAxes)
 axes[0].legend()
 
 axes[1].plot(thetalist,rhozzlist0/rhozzlist0[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
