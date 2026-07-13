@@ -70,3 +70,9 @@ def piminusdeltapiminusdeltazero(deltak,g,strength,spread_xy,spread_z,delta,n):
     prefactor = (strength/((spread_xy**2)*spread_z))*0.25
 
     return prefactor*(pi_piminusdelta_gaussian+pi_piplusdelta_gaussian+piminusdelta_pi_gaussian+piplusdelta_pi_gaussian)*zaxis_gaussian
+
+def pipidelta_exp(deltak,g,strength,spread_xy,n):
+    qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
+    #secretly delta in qz, implemented through conductivity.py
+    #strength implemented as an exponential 
+    return (1/spread_xy**2)*np.exp(strength-(((np.abs(qx)-g[0]/2)**2 + (np.abs(qy)-g[1]/2)**2)/(spread_xy**2))**n)

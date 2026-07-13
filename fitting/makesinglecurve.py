@@ -16,7 +16,7 @@ res_xy = 100
 #0.08092599477597432,11.26784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975667416478
 
 #0.08803848932294113,0.41445800233548447,140.3929311204074,0.08340318765132346,0.2731068119348874,1.9755450186340013,2.531892490692818,0.2446595289952605,0.7457752153124259
-Tzmultvalue,invtau_iso,strength,spread_xy,n,strength_fwd,spread_fwd = 0.032,10,50000,0.143,6.3,0,0.2
+Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.0305,8,18.425,0.144,6.5
 mumultvalue=0.805
 
 plotScattering=False
@@ -36,7 +36,7 @@ def create_rhozz(phi,Bmag,scattering_in=True,plotScattering=plotScattering):
     starttime = time()
     conductivityInstance.createAmatrix_Bindependent_isotropic()
 
-    conductivityInstance.create_Hfunc(scatteringmodel="pipidelta",strength=strength,spread_xy=spread_xy,n=n)
+    conductivityInstance.create_Hfunc(scatteringmodel="pipidelta_exp",strength=strength,spread_xy=spread_xy,n=n)
     conductivityInstance.createAmatrix_Bindependent_fwdscatter_out()
     if scattering_in: conductivityInstance.createAmatrix_Bindependent_fwdscatter_in()
 
