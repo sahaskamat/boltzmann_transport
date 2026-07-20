@@ -9,14 +9,14 @@ from time import time
 starttime_global = time()
 thetalist = np.linspace(-14,99,20)
 
-res_z = 20
-res_xy = 100
+res_z = 40
+res_xy = 200
 
 
 #0.08092599477597432,11.26784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975667416478
 
 #0.08803848932294113,0.41445800233548447,140.3929311204074,0.08340318765132346,0.2731068119348874,1.9755450186340013,2.531892490692818,0.2446595289952605,0.7457752153124259
-Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.0305,8,18.425,0.144,6.5
+Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.030,8,16,0.136,5
 mumultvalue=0.805
 
 plotScattering=False
@@ -78,10 +78,6 @@ def create_rhozz(phi,Bmag,scattering_in=True,plotScattering=plotScattering):
 
 #p.savetxt("rhoxyvstPhi"+str(phi)+".dat",np.transpose([thetalist,rhoxylist]))
 
-#load data
-data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2601C/2601C_phi0_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2601C/2601C_phi45_T35K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-
 #generate data
 rhozzlist0 = create_rhozz(phi=0,Bmag=45,scattering_in=True)
 #rhozzlist0_withoutSCin = create_rhozz(phi=0,Bmag=45,scattering_in=False)
@@ -93,18 +89,30 @@ fig,axes = plt.subplots(nrows=1,ncols=2, figsize=(10, 5))
 axes[0].plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
 axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
 #axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+axes[1].plot(thetalist,rhozzlist0/rhozzlist0[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
+axes[1].plot(thetalist,rhozzlist45/rhozzlist45[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
+#axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
+
+#load data
+data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2511A/2511A_phi0_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2511A/2511A_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-100],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[-100],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+
+data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2601C/2601C_phi0_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2601C/2601C_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-100],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[-100],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+
+
 axes[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )") 
 axes[0].set_xlabel(r'$\theta$')
 axes[0].text(0.1,0.1,f"LSCO x=0.24\nT=35 K\nRes={res_z}x{res_xy}\n$\pi-\pi-\delta(q_z)$ scatterers + isotropic\n$t_z = 0.03$",fontsize=10, transform=axes[0].transAxes)
 axes[0].legend()
-
-axes[1].plot(thetalist,rhozzlist0/rhozzlist0[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
-axes[1].plot(thetalist,rhozzlist45/rhozzlist45[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
-#axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
-axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-100],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
-axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[-100],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
 axes[1].set_ylabel(r"$\rho_{zz}/\rho_{zz0}$") #($m\Omega$ cm )
 axes[1].set_xlabel(r'$\theta$')
 

@@ -11,7 +11,7 @@ import os
 
 plt.ion()
 
-def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipidelta",delta_in_k=False,initialguess=(0.03411,9.9,120000,0.1235,3.4),bounds = Bounds([0.01,0,0,0.05,0.05,0,0,0.2,0.1],[0.12,30,1000,0.4,0.4,12.0,5,1,1]),parallel_over_theta="True",plot=False):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipidelta_exp",delta_in_k=False,initialguess=(0.03411,9.9,120000,0.1235,3.4),bounds = Bounds([0.01,0,0,0.05,0.05,0,0,0.2,0.1],[0.12,30,1000,0.4,0.4,12.0,5,1,1]),parallel_over_theta="True",plot=False):
     """
     Inputs: 
     scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
@@ -76,7 +76,10 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         rhozz0list = create_rhozz(phi=0,Bmag=field)
         rhozz45list = create_rhozz(phi=45,Bmag=field)
 
-        cost = np.sum((rhozz0list - data_rhozz0_interp)**2) + np.sum((rhozz45list - data_rhozz45_interp)**2)
+        cost_leastsq = np.sum((rhozz0list - data_rhozz0_interp)**2) + np.sum((rhozz45list - data_rhozz45_interp)**2)
+        cost_diff = np.sum((np.diff(rhozz0list) - np.diff(data_rhozz0_interp))**2) + np.sum((np.diff(rhozz45list) - np.diff(data_rhozz45_interp))**2)
+        cost = cost_leastsq + cost_diff*10
+        #print(f"Cost_leastsq={cost_leastsq},cost_diff={cost_diff}")
 
         if plot:
             plt.clf()
@@ -101,7 +104,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
                     f.write(f"T={T} K, B = {field} T, theta= {theta_min} to {theta_max}, phi = 0 and 45\n")
                     f.write("Fixed parameters:\n")
                     f.write(f"T={fixedparams[0]},T1multvalue={fixedparams[1]},T11multvalue={fixedparams[2]}\n")
-                    f.write("cost,Tzmultvalue,invtau_iso,strength,spread_xy,n\n")
+                    f.write("cost_leastsq+cost_diff,Tzmultvalue,invtau_iso,strength,spread_xy,n\n")
                     f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{n}\n")
                     print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},n={n}")
 
