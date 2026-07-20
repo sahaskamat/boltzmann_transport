@@ -76,3 +76,22 @@ def pipidelta_exp(deltak,g,strength,spread_xy,n):
     #secretly delta in qz, implemented through conductivity.py
     #strength implemented as an exponential 
     return (1/spread_xy**2)*np.exp(strength-(((np.abs(qx)-g[0]/2)**2 + (np.abs(qy)-g[1]/2)**2)/(spread_xy**2))**n)
+
+def piminusepsilon_delta_exp(deltak,g,strength,spread_xy,epsilon):
+    qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
+    #secretly delta in qz, implemented through conductivity.py
+    #strength implemented as an exponential 
+
+    piminusepsilon = g[0]*(0.5-epsilon/2)
+    piplusepsilon = g[0]*(0.5+epsilon/2)
+    pi = (g[0]/2)
+    spread_abs = spread_xy*g[0] #convering spread from relative units to absolute
+
+    pi_piminusepsilon_gaussian = np.exp(-(((np.abs(qx)-piminusepsilon)**2 + (np.abs(qy)-pi)**2)/(spread_abs**2)))
+    pi_piplusepsilon_gaussian = np.exp(-(((np.abs(qx)-piplusepsilon)**2 + (np.abs(qy)-pi)**2)/(spread_abs**2)))
+    piminusepsilon_pi_gaussian = np.exp(-(((np.abs(qx)-pi)**2 + (np.abs(qy)-piminusepsilon)**2)/(spread_abs**2)))
+    piplusepsilon_pi_gaussian = np.exp(-(((np.abs(qx)-pi)**2 + (np.abs(qy)-piplusepsilon)**2)/(spread_abs**2)))
+
+    prefactor = (1/((spread_xy**2)))*0.25*np.exp(strength)
+
+    return prefactor*(pi_piminusepsilon_gaussian+pi_piplusepsilon_gaussian+piminusepsilon_pi_gaussian+piplusepsilon_pi_gaussian)
