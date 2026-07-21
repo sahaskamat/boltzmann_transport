@@ -11,8 +11,7 @@ thetalist = np.sort(np.concatenate([np.linspace(-14,99,20),[0]])) #list of 20 nu
 
 res_z = 20
 res_xy = 100
-
-Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.03,8.0,16.0,0.136,5
+Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.03360347982382471,8,24.657756992107267,0.12767852961602463,5
 mumultvalue=0.805
 
 plotScattering=False
