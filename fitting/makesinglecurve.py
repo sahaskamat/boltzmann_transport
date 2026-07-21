@@ -7,16 +7,12 @@ from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
 
 starttime_global = time()
-thetalist = np.linspace(-14,99,20)
+thetalist = np.sort(np.concatenate([np.linspace(-14,99,20),[0]])) #list of 20 numbers from -14 to 99 but 0 is forced in there
 
-res_z = 40
-res_xy = 200
+res_z = 20
+res_xy = 100
 
-
-#0.08092599477597432,11.26784244076325,16.610774375940203,0.11172046324944028,0.3944838562322481,1.4988975667416478
-
-#0.08803848932294113,0.41445800233548447,140.3929311204074,0.08340318765132346,0.2731068119348874,1.9755450186340013,2.531892490692818,0.2446595289952605,0.7457752153124259
-Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.030,8,16,0.136,5
+Tzmultvalue,invtau_iso,strength,spread_xy,n = 0.03,8.0,16.0,0.136,5
 mumultvalue=0.805
 
 plotScattering=False
@@ -89,8 +85,8 @@ fig,axes = plt.subplots(nrows=1,ncols=2, figsize=(10, 5))
 axes[0].plot(thetalist,rhozzlist0,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
 axes[0].plot(thetalist,rhozzlist45,ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
 #axes[0].plot(thetalist,rhozzlist0_withoutSCin,ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
-axes[1].plot(thetalist,rhozzlist0/rhozzlist0[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
-axes[1].plot(thetalist,rhozzlist45/rhozzlist45[2],ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
+axes[1].plot(thetalist,rhozzlist0/rhozzlist0[np.argmin(thetalist**2)],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$")
+axes[1].plot(thetalist,rhozzlist45/rhozzlist45[np.argmin(thetalist**2)],ls="-",marker="o",ms=2,label=f"Model, $\phi=45$")
 #axes[1].plot(thetalist,rhozzlist0_withoutSCin/rhozzlist0_withoutSCin[0],ls="-",marker="o",ms=2,label=f"Model, $\phi=0$, no scattering in")
 
 #load data
@@ -98,15 +94,15 @@ data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2511A/2511A_phi0_T30K_B45.0
 data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2511A/2511A_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
-axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-100],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
-axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[-100],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[np.argmin(data_theta0**2)],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[np.argmin(data_theta45**2)],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
 
 data_theta0,data_rhozz0 = np.loadtxt("data/admr_data/2601C/2601C_phi0_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 data_theta45,data_rhozz45 = np.loadtxt("data/admr_data/2601C/2601C_phi45_T30K_B45.0T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
 axes[0].plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2,label="Data, $\phi=0$")
 axes[0].plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2,label="Data, $\phi=45$")
-axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[-100],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
-axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[-100],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
+axes[1].plot(data_theta0,data_rhozz0/data_rhozz0[np.argmin(data_theta0**2)],ls="-",marker="o",ms=2,label="Data, $\phi=0$")
+axes[1].plot(data_theta45,data_rhozz45/data_rhozz45[np.argmin(data_theta45**2)],ls="-",marker="o",ms=2,label="Data, $\phi=45$")
 
 
 axes[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )") 

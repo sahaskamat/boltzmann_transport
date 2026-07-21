@@ -11,7 +11,7 @@ import os
 
 plt.ion()
 
-def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipidelta_exp",delta_in_k=False,initialguess=(0.03411,9.9,120000,0.1235,3.4),bounds = Bounds([0.01,0,0,0.05,0.05,0,0,0.2,0.1],[0.12,30,1000,0.4,0.4,12.0,5,1,1]),parallel_over_theta="True",plot=False):
+def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedparams=(190e-3,-0.132,0.066,0.81),scatteringmodel="pipidelta_exp",delta_in_k=False,initialguess=(0.03411,9.9,120000,0.1235),bounds = Bounds([0.02,0.1,12,0.05],[0.045,30,30,0.5]),parallel_over_theta="True",plot=False):
     """
     Inputs: 
     scatteringmodel (string, corresponding to the name of a function scatteringmodel(deltak,g,**kwargs) in transport.scattering_kernels)
@@ -21,28 +21,33 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
     plot (bool, if True, fit is plotted at each costfunction evaluation.)
     """
 
-    T = temp
     #global params for the fit
     starttime_global = time()
     theta_min = -14
-    thetalist = np.linspace(theta_min,theta_max,20)
+    thetalist = np.sort(np.concatenate([np.linspace(theta_min,theta_max,20),[0]])) #list of 20 numbers from theta_min to theta_max but 0 is forced in there
 
     res_z = 20
     res_xy = 100
 
     #load data
-    data_theta0,data_rhozz0 = np.loadtxt(f"data/admr_data/{sample}/{sample}_phi0_T{T}K_B{field}T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-    data_theta0,data_rhozz0 = zip(*sorted(zip(data_theta0,data_rhozz0)))
+    data_theta0,data_rhozz0 = np.loadtxt(f"data/admr_data/{sample}/{sample}_phi0_T{temp}K_B{field}T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+    data_theta0,data_rhozz0 = data_theta0[np.argsort(data_theta0)],data_rhozz0[np.argsort(data_theta0)]
     data_rhozz0_interp = np.interp(thetalist,data_theta0,data_rhozz0)
+    data_rhozz0_normalized = data_rhozz0_interp/data_rhozz0_interp[np.argmin(thetalist**2)]
 
-    data_theta45,data_rhozz45 = np.loadtxt(f"data/admr_data/{sample}/{sample}_phi45_T{T}K_B{field}T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
-    data_theta45,data_rhozz45 = zip(*sorted(zip(data_theta45,data_rhozz45)))
+    data_theta45,data_rhozz45 = np.loadtxt(f"data/admr_data/{sample}/{sample}_phi45_T{temp}K_B{field}T.txt",unpack=True,skiprows=1,delimiter=",",usecols=(0,1))
+    data_theta45,data_rhozz45 = data_theta45[np.argsort(data_theta45)],data_rhozz45[np.argsort(data_theta45)]
     data_rhozz45_interp = np.interp(thetalist,data_theta45,data_rhozz45)
+    data_rhozz45_normalized = data_rhozz45_interp/data_rhozz45_interp[np.argmin(thetalist**2)]
+
+    if plot:
+        fig, ax = plt.subplots(1, 2, figsize=(10, 4))
 
     def costfunction(params):
-        Tzmultvalue,invtau_iso,strength,spread_xy,n = np.abs(params)
-
-        dispersionInstance = dispersion.LSCOdispersion(T=fixedparams[0],T1multvalue=fixedparams[1],T11multvalue=fixedparams[2],Tzmultvalue=Tzmultvalue,mumultvalue=fixedparams[3])
+        Tzmultvalue,invtau_iso,strength,spread_xy = np.abs(params)
+        T,T1multvalue,T11multvalue,mumultvalue,n = fixedparams
+        
+        dispersionInstance = dispersion.LSCOdispersion(T=T,T1multvalue=T1multvalue,T11multvalue=T11multvalue,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
 
         FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
         FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
@@ -76,37 +81,53 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         rhozz0list = create_rhozz(phi=0,Bmag=field)
         rhozz45list = create_rhozz(phi=45,Bmag=field)
 
+        rhozz0list_normalized = rhozz0list/rhozz0list[np.argmin(thetalist**2)]
+        rhozz45list_normalized = rhozz45list/rhozz45list[np.argmin(thetalist**2)]
+
         cost_leastsq = np.sum((rhozz0list - data_rhozz0_interp)**2) + np.sum((rhozz45list - data_rhozz45_interp)**2)
-        cost_diff = np.sum((np.diff(rhozz0list) - np.diff(data_rhozz0_interp))**2) + np.sum((np.diff(rhozz45list) - np.diff(data_rhozz45_interp))**2)
-        cost = cost_leastsq + cost_diff*10
+        cost_shape = np.sum((rhozz0list_normalized-data_rhozz0_normalized)**2) + np.sum((rhozz45list_normalized-data_rhozz45_normalized)**2)
+        cost = cost_leastsq + cost_shape*500
         #print(f"Cost_leastsq={cost_leastsq},cost_diff={cost_diff}")
 
         if plot:
-            plt.clf()
-            plt.plot(thetalist,rhozz0list,ls="-",marker="o",ms=2)
-            plt.plot(thetalist,rhozz45list,ls="-",marker="o",ms=2)
-            plt.plot(data_theta0,data_rhozz0,ls="-",marker="o",ms=2)
-            plt.plot(data_theta45,data_rhozz45,ls="-",marker="o",ms=2)
-            plt.ylabel(r"$\rho_{zz}$ ($m\Omega$ cm )")
-            plt.xticks([0,45,90])
-            plt.xlabel(r'$\theta$')
-            plt.show(block=False)
+            ax[0].cla()
+            ax[1].cla()
+
+            ax[0].plot(thetalist, rhozz0list, ls="-", marker="o", ms=2)
+            ax[0].plot(thetalist, rhozz45list, ls="-", marker="o", ms=2)
+            ax[0].plot(data_theta0, data_rhozz0, ls="-", marker="o", ms=2)
+            ax[0].plot(data_theta45, data_rhozz45, ls="-", marker="o", ms=2)
+            ax[0].set_ylabel(r"$\rho_{zz}$ ($m\Omega$ cm)")
+            ax[0].set_xlabel(r"$\theta$")
+            ax[0].set_xticks([0, 45, 90])
+
+            ax[1].plot(thetalist, rhozz0list_normalized, ls="-", marker="o", ms=2)
+            ax[1].plot(thetalist, rhozz45list_normalized, ls="-", marker="o", ms=2)
+            ax[1].plot(data_theta0, data_rhozz0/data_rhozz0[np.argmin(data_theta0**2)], ls="-", marker="o", ms=2)
+            ax[1].plot(data_theta45, data_rhozz45/data_rhozz45[np.argmin(data_theta45**2)], ls="-", marker="o", ms=2)
+            ax[1].set_ylabel(r"$\rho_{zz}/\rho_{zz0}$ ($m\Omega$ cm)")
+            ax[1].set_xlabel(r"$\theta$")
+            ax[1].set_xticks([0, 45, 90])
+
+            plt.tight_layout()
+            plt.draw()
             plt.pause(0.1)
 
-        file_path = f"fitting/fit_logs/fit_logs_nonRTA/fit_logs_{doping}perc_{T}K_{scatteringmodel}.txt"
+        file_path = f"fitting/fit_logs/fit_logs_nonRTA/fit_logs_{doping}perc_{temp}K_{scatteringmodel}.txt"
         if os.path.exists(file_path):
             with open(file_path,"a") as f:
-                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},n={n}")
+                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy}\n")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy}")
         else:
             with open(file_path,"w") as f:
                     f.write(f"LSCO {sample}, x = {doping}%\n")
-                    f.write(f"T={T} K, B = {field} T, theta= {theta_min} to {theta_max}, phi = 0 and 45\n")
+                    f.write(f"T={temp} K, B = {field} T, theta= {theta_min} to {theta_max}, phi = 0 and 45\n")
                     f.write("Fixed parameters:\n")
-                    f.write(f"T={fixedparams[0]},T1multvalue={fixedparams[1]},T11multvalue={fixedparams[2]}\n")
-                    f.write("cost_leastsq+cost_diff,Tzmultvalue,invtau_iso,strength,spread_xy,n\n")
-                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy},{n}\n")
-                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy},n={n}")
+                    f.write(f"T,T1multvalue,T11multvalue,mumultvalue,n")
+                    f.write(f"{T},{T1multvalue},{T11multvalue},{mumultvalue},{n}")
+                    f.write("cost_leastsq+cost_shape,Tzmultvalue,invtau_iso,strength,spread_xy\n")
+                    f.write(f"{cost},{Tzmultvalue},{invtau_iso},{strength},{spread_xy}\n")
+                    print(f"Cost={cost},Tzmultvalue={Tzmultvalue},invtau_iso={invtau_iso},strength={strength},spread_xy={spread_xy}")
 
         return cost
     
@@ -114,7 +135,17 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
     if parallel_over_theta: res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=5,maxiter=10000)
     else: 
          pool = ThreadPool(4)
-         res = differential_evolution(costfunction,bounds,x0=initialguess,popsize=4,maxiter=10000,workers=pool.map,updating="deferred")
+         res = differential_evolution(
+              costfunction,
+              bounds,
+              x0=initialguess,
+              strategy="rand2bin",
+              popsize=40,
+              mutation=(1.0, 1.9),
+              recombination=0.95,
+              init="sobol",
+              workers=pool.map,
+              updating="deferred")
 
     return res.x
 
