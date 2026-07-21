@@ -1,4 +1,4 @@
-from fitting.globaloptimization import fit_data
+from fitting.scipy_global_optimizers.globaloptimization import fit_data
 from scipy.optimize import Bounds
 
 #fit 24 percent data

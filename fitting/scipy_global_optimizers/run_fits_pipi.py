@@ -2,7 +2,7 @@ import os
 os.environ["OMP_NUM_THREADS"] = "3"
 os.environ["MKL_NUM_THREADS"] = "3"
 
-from fitting.globaloptimization import fit_data
+from fitting.scipy_global_optimizers.globaloptimization import fit_data
 from scipy.optimize import Bounds
 
 bounds = Bounds([0.02,0.1,12,0.05],[0.045,30,25,0.5])
