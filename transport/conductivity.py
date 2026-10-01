@@ -96,18 +96,16 @@ class Conductivity:
         import transport.scattering_kernels as scattering_kernels
 
         #reciprocal lattice vectors
-        g1,g2,g3 = self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3
+        g = np.array([self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3])
 
         def H_func(k,kprime): #should be vectorized in kprime
             deltak = k-kprime #array of 3-vectors if kprime is a 3-vec array
 
             #reducing deltak to its minimum value by accounting for periodic boundaries for the BZ
-            deltak[:,0] = deltak[:,0] - g1*np.round(deltak[:,0]/g1)
-            deltak[:,1] = deltak[:,1] - g2*np.round(deltak[:,1]/g2)
-            deltak[:,2] = deltak[:,2] - g3*np.round(deltak[:,2]/g3)
+            deltak = deltak - np.round(deltak/g)*g #reduces deltak to its minimum value by accounting for periodic boundaries for the BZ
             
             kernel = getattr(scattering_kernels, scatteringmodel) #imports a function that takes deltak,g (list of reciprocal lattice vectors g1,g2,g3),**kwargs as input and outputs scattering matrix elements corresponding to each deltak
-            h_func_val =  kernel(deltak,[g1,g2,g3],**kwargs)
+            h_func_val =  kernel(deltak,g,**kwargs)
             
             return np.nan_to_num(h_func_val, nan=0.0, posinf=0.0)
 
@@ -234,14 +232,20 @@ class Conductivity:
         dgdt_out_list = self.dgdt_out_list
         #creates a plot of scattering out rate vs angle
         import matplotlib.pyplot as plt
-        fig= plt.figure(figsize=(15, 5))
-        ax1 = fig.add_subplot(1, 3, 1)
+        fig= plt.figure(figsize=(11, 10))
+        ax1 = fig.add_subplot(2, 3, 1)
         ax1_twin = ax1.twinx()
-        ax2 = fig.add_subplot(1, 3, 2)
-        ax3 = fig.add_subplot(1, 3, 3)
+        ax2 = fig.add_subplot(2, 2, 2)
+        ax3 = fig.add_subplot(2, 2, 3)
+        ax4 = fig.add_subplot(2, 2, 4)
 
         #pick an orbit in the middle,start and halfway point of the FS
-        orbit_numbers = [0,self.FSorbitsInstance.n_points//8,self.FSorbitsInstance.n_points//4,self.FSorbitsInstance.n_points//2]
+        orbit_numbers = [self.FSorbitsInstance.n_points//2,self.FSorbitsInstance.n_points//4,self.FSorbitsInstance.n_points//8,0]
+
+        #reciprocal lattice vectors
+        g1,g2,g3 = self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3
+        ax2.plot([-g1/2,g1/2,g1/2,-g1/2,-g1/2],[g2/2,g2/2,-g2/2,-g2/2,g2/2],color='black')
+        ax4.plot([-g1/2,g1/2,g1/2,-g1/2,-g1/2],[g2/2,g2/2,-g2/2,-g2/2,g2/2],color='black')
 
         for id,orbit_num in enumerate(orbit_numbers):
             #iterate over this orbit and plot scattering rate
@@ -259,12 +263,23 @@ class Conductivity:
                 ax2.scatter(state[0],state[1],color=f"C{id}",s=5)
                 ax3.scatter(theta,dos,color=f"C{id}",s=5)
 
-        #reciprocal lattice vectors
-        g1,g2,g3 = self.FSorbitsInstance.g1,self.FSorbitsInstance.g2,self.FSorbitsInstance.g3
-        ax2.plot([-g1/2,g1/2,g1/2,-g1/2,-g1/2],[g2/2,g2/2,-g2/2,-g2/2,g2/2],color='black')
+            #plot space of all momentum transfers
+            array_of_states = self.FSorbitsInstance.FSorbits[orbit_num]
+            diff = array_of_states[:, None, :] - array_of_states[None, :, :] 
+            diff = diff.reshape(-1, 3) #diff is state minus every other state
+            diff[:,0] = diff[:,0] - g1*np.round(diff[:,0]/g1) #modulo reciprocal lattice
+            diff[:,1] = diff[:,1] - g2*np.round(diff[:,1]/g2) #modulo reciprocal lattice
+            ax4.scatter(diff[:, 0], diff[:, 1], color=f"C{id}", s=5)
+
+            #now put contours of h_func on this
+            x,y = np.meshgrid(np.linspace(-g1/2,g1/2,100),np.linspace(-g2/2,g2/2,100))
+            z = np.vectorize(self.H_func)(x,y)
+            print(z.shape)
+            ax4.contour(x,y,z,levels=10)
 
         ax1.set_title("Scattering out rate")
         ax1.set_xlim(-np.pi/2,np.pi/2)
+        ax1_twin.set_xlim(-np.pi/2,np.pi/2)
         ax1.plot(0,0)
         ax1_twin.set_ylim(-0.1,0.5)
         ax2.set_title("Fermi Surface")
@@ -272,6 +287,5 @@ class Conductivity:
         ax3.set_xlim(-np.pi/2,np.pi/2)
         ax3.plot(0,0)
 
-        plt.tight_layout()
-        plt.show()
+        fig.tight_layout()
 
