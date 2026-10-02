@@ -22,7 +22,6 @@ def build_FS(config: DispersionConfig):
         tilingformat="variable", alpha=config.tiling_alpha, parallelised=False
     )
     doping = fsOrbits_instance.calculateDoping()
-    print(f"Doping={doping}")
     return dispersion_instance, fsOrbits_instance
 
 
