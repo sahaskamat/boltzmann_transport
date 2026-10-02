@@ -14,7 +14,7 @@ from sandbox.config.experimentaldataconfig import ExperimentalDataConfig
 
 from sandbox.calculations import calculate_all_curves
 from sandbox.data import load_and_interpolate
-from sandbox.model import build_model
+from sandbox.createFSandScattering import build_scattering,build_FS
 from sandbox.plotting import plot_curves
 
 # Edit these blocks for new curves. The dispersion is built once and shared.
@@ -43,8 +43,9 @@ EXPERIMENTAL_DATA_CONFIGS = (
 
 
 def main() -> None:
-    model = build_model(DISPERSION_CONFIG)
-    results = calculate_all_curves(ADMR_CONFIGS, SCATTERING_CONFIG, model)
+    fermisurface = build_FS(DISPERSION_CONFIG)
+    scatteringmodel = build_scattering(SCATTERING_CONFIG,fermisurface)
+    results = calculate_all_curves(ADMR_CONFIGS, SCATTERING_CONFIG, scatteringmodel)
     experimental_data = [
         load_and_interpolate(config, result.theta)
         for config, result in zip(EXPERIMENTAL_DATA_CONFIGS, results)

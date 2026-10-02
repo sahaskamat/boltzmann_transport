@@ -6,7 +6,7 @@ import numpy as np
 from transport.makesigmalist import makelist_parallel
 
 from .config import ADMRConfig, ScatteringConfig
-from .model import TransportModel, build_conductivity
+from .createFSandScattering import FermiSurface, build_scattering
 
 
 @dataclass
@@ -41,11 +41,11 @@ def _magnetic_field(theta: float, phi: float, magnitude: float) -> list:
 def calculate_curve(
     admr_config: ADMRConfig,
     scattering_config: ScatteringConfig,
-    model: TransportModel,
+    model: FermiSurface,
     theta: np.ndarray,
-) -> CurveResult:
+    ) -> CurveResult:
     start = time()
-    conductivity_instance = build_conductivity(scattering_config, model)
+    conductivity_instance = build_scattering(scattering_config, model)
 
     def get_sigma(theta_value: float, field: float = admr_config.field):
         conductivity_instance.createAmatrix_Bdependent(
@@ -71,7 +71,7 @@ def calculate_curve(
 
 
 def calculate_all_curves(
-    admr_configs, scattering_config, model: TransportModel):
+    admr_configs, scattering_config, model: FermiSurface):
 
     return [
         calculate_curve(
