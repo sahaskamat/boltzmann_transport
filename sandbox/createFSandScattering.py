@@ -7,12 +7,7 @@ import transport.orbitcreation as orbitcreation
 from .config import DispersionConfig, ScatteringConfig
 
 
-@dataclass
-class FermiSurface:
-    dispersion: object
-    fsOrbits: object
-
-def build_FS(config: DispersionConfig) -> FermiSurface:
+def build_FS(config: DispersionConfig):
     dispersion_instance = dispersion.LSCOdispersion(
         T=config.temperature_energy,
         T1multvalue=config.T1multvalue,
@@ -28,14 +23,14 @@ def build_FS(config: DispersionConfig) -> FermiSurface:
     )
     doping = fsOrbits_instance.calculateDoping()
     print(f"Doping={doping}")
-    return FermiSurface(dispersion=dispersion_instance, fsOrbits=fsOrbits_instance)
+    return dispersion_instance, fsOrbits_instance
 
 
 
-def build_scattering(config: ScatteringConfig, fermisurface: FermiSurface):
+def build_scattering(config: ScatteringConfig, dispersion_instance, fsOrbits_instance):
     conductivity_instance = conductivity.Conductivity(
-        fermisurface.dispersion,
-        fermisurface.fsOrbits,
+        dispersion_instance,
+        fsOrbits_instance,
         invtau_iso=config.invtau_iso,
         delta_in_k=config.delta_in_k,
     )

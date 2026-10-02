@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 if str(REPOSITORY_ROOT) not in sys.path:
@@ -12,10 +13,8 @@ from sandbox.config.scatteringconfig import ScatteringConfig
 from sandbox.config.ADMRconfig import ADMRConfig
 from sandbox.config.experimentaldataconfig import ExperimentalDataConfig
 
-from sandbox.calculations import calculate_all_curves
-from sandbox.data import load_and_interpolate
+from sandbox.calculateADMR import rhoZZ_vs_theta
 from sandbox.createFSandScattering import build_scattering,build_FS
-from sandbox.plotting import plot_curves
 
 # Edit these blocks for new curves. The dispersion is built once and shared.
 DISPERSION_CONFIG = DispersionConfig()
@@ -43,14 +42,15 @@ EXPERIMENTAL_DATA_CONFIGS = (
 
 
 def main() -> None:
-    fermisurface = build_FS(DISPERSION_CONFIG)
-    scatteringmodel = build_scattering(SCATTERING_CONFIG,fermisurface)
-    results = calculate_all_curves(ADMR_CONFIGS, SCATTERING_CONFIG, scatteringmodel)
-    experimental_data = [
-        load_and_interpolate(config, result.theta)
-        for config, result in zip(EXPERIMENTAL_DATA_CONFIGS, results)
-    ]
-    plot_curves(theoretical_results=results, experimental_data=experimental_data)
+    fig,axes = plt.subplots()
+    dispersion, fermi_surface = build_FS(DISPERSION_CONFIG)
+    scattering = build_scattering(SCATTERING_CONFIG,dispersion,fermi_surface)
+    for admr_config in ADMR_CONFIGS:
+        theta,rho = rhoZZ_vs_theta(admr_config,dispersion,fermi_surface,scattering)
+        axes.plot(theta,rho)
+
+    plt.show()
+    #plot_curves(theoretical_results=results, experimental_data=experimental_data)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from .calculations import CurveResult
+from .calculateADMR import CurveResult
 from .data import ExperimentalData
 
 
