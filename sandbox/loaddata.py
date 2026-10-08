@@ -5,15 +5,7 @@ import numpy as np
 
 from .config import ExperimentalDataConfig
 
-
-@dataclass(frozen=True)
-class ExperimentalData:
-    theta: np.ndarray
-    rho: np.ndarray
-    label: str
-
-
-def _data_path(config: ExperimentalDataConfig) -> Path:
+def data_path(config: ExperimentalDataConfig):
     return (
         Path(config.repository_directory)
         / "data"
@@ -22,12 +14,9 @@ def _data_path(config: ExperimentalDataConfig) -> Path:
         / f"{config.sample}_phi{config.phi:g}_T{config.temperature_kelvin}K_B{config.field:.1f}T.txt"
     )
 
-
-def load_experimental_data(
-    config: ExperimentalDataConfig,
-) -> tuple[np.ndarray, np.ndarray]:
+def load_experimental_data(config: ExperimentalDataConfig):
     """Load one experimental file and return its sorted theta/rho arrays."""
-    path = _data_path(config)
+    path = data_path(config)
     if not path.exists():
         raise FileNotFoundError(f"Experimental data file not found: {path}")
     data_theta, data_rho = np.loadtxt(
@@ -36,11 +25,9 @@ def load_experimental_data(
     order = np.argsort(data_theta)
     return data_theta[order], data_rho[order]
 
-
-def load_and_interpolate(
-    config: ExperimentalDataConfig, theta: np.ndarray
-) -> ExperimentalData:
+def interpolate_experimental_data(data_theta,data_rho,theta):
     """Load data and interpolate it onto a theoretical theta grid."""
-    data_theta, data_rho = load_experimental_data(config)
+    data_theta = np.asarray(data_theta)
+    data_rho = np.asarray(data_rho)
     theta = np.asarray(theta)
-    return ExperimentalData(theta, np.interp(theta, data_theta, data_rho), config.label)
+    return np.interp(theta, data_theta, data_rho)

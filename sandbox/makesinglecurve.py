@@ -15,39 +15,38 @@ from sandbox.config.experimentaldataconfig import ExperimentalDataConfig
 
 from sandbox.calculateADMR import rhoZZ_vs_theta
 from sandbox.createFSandScattering import build_scattering,build_FS
+from sandbox.loaddata import load_experimental_data
+from sandbox.plotting import normalize_data
 
 # Edit these blocks for new curves. The dispersion is built once and shared.
-DISPERSION_CONFIG = DispersionConfig()
-SCATTERING_CONFIG = ScatteringConfig()
+DISPERSION_CONFIG = DispersionConfig(Tzmultvalue = 0.033369871920650995)
+SCATTERING_CONFIG = ScatteringConfig(invtau_iso=10.2,scattering_kwargs={"strength":16,"spread_xy":0.136,"n":5.167})
 ADMR_CONFIGS = (ADMRConfig(phi=0, field=45.0),ADMRConfig(phi=45, field=45.0))
 
 EXPERIMENTAL_DATA_CONFIGS = (
-    ExperimentalDataConfig(
-        repository_directory=REPOSITORY_ROOT,
-        sample="2511A",
-        temperature_kelvin=30,
-        phi=0,
-        field=45.0,
-        label="Data, phi=0",
-    ),
-    ExperimentalDataConfig(
-        repository_directory=REPOSITORY_ROOT,
-        sample="2511A",
-        temperature_kelvin=30,
-        phi=30,
-        field=45.0,
-        label="Data, phi=30",
-    ),
+    ExperimentalDataConfig(sample="2511A",temperature_kelvin=35,phi=0,field=45.0),
+    ExperimentalDataConfig(sample="2511A",temperature_kelvin=35,phi=45,field=45.0),
 )
 
-
 def main() -> None:
-    fig,axes = plt.subplots()
     dispersion, fermi_surface = build_FS(DISPERSION_CONFIG)
     scattering = build_scattering(SCATTERING_CONFIG,dispersion,fermi_surface)
-    for admr_config in ADMR_CONFIGS:
-        theta,rho = rhoZZ_vs_theta(admr_config,dispersion,fermi_surface,scattering)
+
+    fig,(axes,axes2) = plt.subplots(1,2,figsize=(8,4))
+    for admr_config,experimental_data in zip(ADMR_CONFIGS, EXPERIMENTAL_DATA_CONFIGS):
+
+        theta,rho = rhoZZ_vs_theta(admr_config,scattering)
         axes.plot(theta,rho)
+        axes2.plot(normalize_data(theta,rho)[0],normalize_data(theta,rho)[1])
+
+        theta_exp,rho_exp = load_experimental_data(experimental_data)
+        axes.plot(theta_exp,rho_exp)
+        axes2.plot(normalize_data(theta_exp,rho_exp)[0],normalize_data(theta_exp,rho_exp)[1])
+
+    axes.set_xlabel(r"$\theta$ ($^\circ$)")
+    axes.set_ylabel(r"$\rho$ (m$\Omega$-cm)")
+    axes2.set_xlabel(r"$\theta$ ($^\circ$)")
+    axes2.set_ylabel(r"$\rho/\rho_0$")
 
     plt.show()
     #plot_curves(theoretical_results=results, experimental_data=experimental_data)
