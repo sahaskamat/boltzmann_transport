@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 
 import transport.conductivity as conductivity
 import transport.dispersion as dispersion
@@ -24,22 +25,31 @@ def build_FS(config: DispersionConfig):
     doping = fsOrbits_instance.calculateDoping()
     return dispersion_instance, fsOrbits_instance
 
-
-
 def build_scattering(config: ScatteringConfig, dispersion_instance, fsOrbits_instance):
     conductivity_instance = conductivity.Conductivity(
         dispersion_instance,
         fsOrbits_instance,
-        invtau_iso=config.invtau_iso,
-        delta_in_k=config.delta_in_k,
+        invtau_iso=config.invtau_iso
     )
     conductivity_instance.createAmatrix_Bindependent_isotropic()
-    conductivity_instance.create_Hfunc(
-        scatteringmodel=config.scatteringmodel,
-        **config.scattering_kwargs,
-    )
-    conductivity_instance.createAmatrix_Bindependent_fwdscatter_out()
-    conductivity_instance.createAmatrix_Bindependent_fwdscatter_in()
+
+    for scatteringmodel,delta_in_k,scattering_kwargs in zip(config.scatteringmodel,config.delta_in_k,config.scattering_kwargs):
+        conductivity_instance.delta_in_k = delta_in_k
+        conductivity_instance.create_Hfunc(
+            scatteringmodel=scatteringmodel,
+            **scattering_kwargs
+        )
+        conductivity_instance.createAmatrix_Bindependent_fwdscatter_out()
+        conductivity_instance.createAmatrix_Bindependent_fwdscatter_in()
+
     if config.plot_scattering:
         conductivity_instance.plotScatteringOut()
+
+    if config.print_in_plane_rho:
+        conductivity_instance.createAmatrix_Bdependent([0,0,0])
+        conductivity_instance.createAlpha()
+        conductivity_instance.createSigma()
+        sigma_0 = conductivity_instance.sigma
+        print("rho_xx =",np.linalg.inv(sigma_0)[0,0]/10,"uOhm-cm")
+
     return conductivity_instance

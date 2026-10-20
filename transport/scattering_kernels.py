@@ -18,7 +18,7 @@ def fourfold_pancake(deltak,g,strength,spread_xy,spread_iso_xy,spread_z):
 
 def offset_inverse_square(deltak,g,strength,spread_xy):
     qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
-    return (strength/(spread_xy**2))/(qx**2 + qy**2 + spread_xy**2)\
+    return (strength/(spread_xy**2))/(qx**2 + qy**2 + spread_xy**2)
     
 def cos2theta(deltak,g,strength,spread_xy,angular_exponent):
     qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
@@ -95,3 +95,10 @@ def piminusepsilon_delta_exp(deltak,g,strength,spread_xy,epsilon):
     prefactor = (1/((spread_xy**2)))*0.25*np.exp(strength)
 
     return prefactor*(pi_piminusepsilon_gaussian+pi_piplusepsilon_gaussian+piminusepsilon_pi_gaussian+piplusepsilon_pi_gaussian)
+
+def q_independent(deltak,g,strength): #different than isotropic if delta_in_k = True!
+    return strength
+
+def only_z_dependent(deltak,g,spread_z,strength):
+    qx,qy,qz = deltak[...,0],deltak[...,1],deltak[...,2]
+    return (strength/(spread_z**2))*np.exp(-(qz**2)/(spread_z**2))
