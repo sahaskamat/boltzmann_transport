@@ -20,7 +20,7 @@ from sandbox.plotting import normalize_data
 
 # Edit these blocks for new curves. The dispersion is built once and shared.
 DISPERSION_CONFIG = DispersionConfig(Tzmultvalue = 0.033369871920650995)
-SCATTERING_CONFIG = ScatteringConfig(invtau_iso=10.2,scattering_kwargs={"strength":16,"spread_xy":0.136,"n":5.167})
+SCATTERING_CONFIG = ScatteringConfig(invtau_iso=9.5,scattering_kwargs={"strength":12,"spread_xy":0.13,"n":4})
 ADMR_CONFIGS = (ADMRConfig(phi=0, field=45.0),ADMRConfig(phi=45, field=45.0))
 
 EXPERIMENTAL_DATA_CONFIGS = (
