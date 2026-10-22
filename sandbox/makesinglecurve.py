@@ -19,9 +19,9 @@ from sandbox.loaddata import load_experimental_data
 from sandbox.plotting import normalize_data
 
 # Edit these blocks for new curves. The dispersion is built once and shared.
-DISPERSION_CONFIG = DispersionConfig(Tzmultvalue = 0.03337)
+DISPERSION_CONFIG = DispersionConfig(Tzmultvalue = 0.05)
 SCATTERING_CONFIG = ScatteringConfig(
-        invtau_iso=9.06,
+        invtau_iso=9,
         scatteringmodel=["pipidelta_exp"],
         delta_in_k=[True],
         scattering_kwargs=[{"strength":13.4,"spread_xy":0.136,"n":5.167}],

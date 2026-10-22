@@ -40,8 +40,9 @@ def pipidelta(deltak,g,strength,spread_xy,n):
     return (strength/spread_xy**2)*np.exp(-(((np.abs(qx)-g[0]/2)**2 + (np.abs(qy)-g[1]/2)**2)/(spread_xy**2))**n)
 
 def pipizero(deltak,g,strength,spread_xy,spread_z,n):
-    qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
-    return (strength/((spread_xy**2)*spread_z))*np.exp(-(((np.abs(qx)-g[0]/2)**2 + (np.abs(qy)-g[1]/2)**2)/(spread_xy**2))**n)*np.exp(-(qz**2)/(spread_z**2))
+    qx,qy,qz = deltak[...,0],deltak[...,1],deltak[...,2]
+    return (strength/((spread_xy**2)))*np.exp(-(((np.abs(qx)-g[0]/2)**2 + (np.abs(qy)-g[1]/2)**2)/(spread_xy**2))**n)*np.exp(-(qz**2)/(spread_z**2))
+    #note that this function is not normalized by spread_z, only spread_xy
 
 def pipipi(deltak,g,strength,spread_xy,spread_z,n):
     qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
