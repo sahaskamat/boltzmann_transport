@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import transport.dispersion as dispersion
-import transport.orbitcreation as orbitcreation
+import transport.fermiSurface as fermiSurface
 import transport.conductivity as conductivity
 from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
@@ -21,7 +21,7 @@ T,T1multvalue,T11multvalue = 190e-3,-0.132,0.066
 plotScattering=False
 
 dispersionInstance = dispersion.LSCOdispersion(T= T,T1multvalue=T1multvalue,T11multvalue=T11multvalue,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
-FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
+FSorbitsInstance = fermiSurface.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
 starttime = time()
 alpha = 0.1
 FSorbitsInstance.createFS(tilingformat="variable",alpha=alpha,parallelised=False)

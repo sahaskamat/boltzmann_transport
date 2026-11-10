@@ -30,7 +30,7 @@ class LSCOdispersion:
         T1 = T1multvalue*T
         T11 = T11multvalue*T
         Tz = Tzmultvalue*T
-        self.mu = -mumultvalue*T #this is the critical point value
+        self.mu = -mumultvalue*T #default params give critical point value
         #mu = -1.15*T #this is a value far from the lifshits singularity (and hence the fermi surface does not cross the van hove points)
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
@@ -93,7 +93,7 @@ class FREEdispersion:
         #now we symbolically define the dispersion
         kx, ky, kz = symp.symbols('kx ky kz')
 
-        en = en = 3.8099820794*(kx**2 + ky**2 + 0.3*symp.cos(kz*(self.c))) - self.mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
+        en = 3.8099820794*(kx**2 + ky**2 + 0.3*symp.cos(kz*(self.c))) - self.mu #2d free electron dispersion, en is in eV and k is in (angstrom-1)
         graden = [symp.diff(en,kx),symp.diff(en,ky),symp.diff(en,kz)]
 
         #############################################################################################

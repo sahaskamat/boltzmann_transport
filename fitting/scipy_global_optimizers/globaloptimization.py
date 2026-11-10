@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import transport.dispersion as dispersion
-import transport.orbitcreation as orbitcreation
+import transport.fermiSurface as fermiSurface
 import transport.conductivity as conductivity
 from transport.makesigmalist import makelist_parallel,makelist_serial
 from time import time
@@ -49,7 +49,7 @@ def fit_data(sample="2511A",doping="24",temp=35,theta_max=99,field=45.0,fixedpar
         
         dispersionInstance = dispersion.LSCOdispersion(T=T,T1multvalue=T1multvalue,T11multvalue=T11multvalue,Tzmultvalue=Tzmultvalue,mumultvalue=mumultvalue)
 
-        FSorbitsInstance = orbitcreation.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
+        FSorbitsInstance = fermiSurface.fermiSurfaceOrbits(res_z,res_xy,dispersionInstance,True)
         FSorbitsInstance.createFS(tilingformat="variable",alpha=0.1,parallelised=False)
         calculated_doping = FSorbitsInstance.calculateDoping()
 

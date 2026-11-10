@@ -10,9 +10,9 @@ class DispersionConfig:
     # Dispersion parameters
     temperature_energy: float = 190e-3
     Tzmultvalue: float = 0.033369871920650995
-    T1multvalue: float = -0.132
-    T11multvalue: float = 0.066
-    mumultvalue: float = 0.81
+    T1multvalue: float = -0.128
+    T11multvalue: float = 0.064
+    mumultvalue: float = 0.87
 
     # Discretization parameters for FS
     res_z: int = 20

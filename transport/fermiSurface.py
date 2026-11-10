@@ -26,7 +26,7 @@ if cpus >60: cpus =60 #joblib breaks if you use too many CPUS (>61)
 # Module to find number of CPUS
 ##########################
 
-class fermiSurfaceOrbits:
+class fermiSurface:
     """
     Inputs:
     res_z (number of slices of the fermi surface in the z direction, with each slice lying in the xy plane)

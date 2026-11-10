@@ -1,7 +1,7 @@
 import numpy as np
 
 def crepe(deltak,g,strength,spread_xy): 
-    qx,qy,qz = deltak[:,0],deltak[:,1],deltak[:,2]
+    qx,qy,qz = deltak[...,0],deltak[...,1],deltak[...,2]
     return (strength/(spread_xy**2))*np.exp(-(qx**2 + qy**2)/(spread_xy**2))
 
 def pancake(deltak,g,strength,spread_xy,spread_z):
@@ -102,4 +102,4 @@ def q_independent(deltak,g,strength): #different than isotropic if delta_in_k = 
 
 def only_z_dependent(deltak,g,spread_z,strength):
     qx,qy,qz = deltak[...,0],deltak[...,1],deltak[...,2]
-    return (strength/(spread_z**2))*np.exp(-(qz**2)/(spread_z**2))
+    return (strength/(spread_z))*np.exp(-(qz**2)/(spread_z**2))

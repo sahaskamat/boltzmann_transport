@@ -3,7 +3,7 @@ import numpy as np
 
 import transport.conductivity as conductivity
 import transport.dispersion as dispersion
-import transport.orbitcreation as orbitcreation
+import transport.fermiSurface as fermiSurface
 
 from .config import DispersionConfig, ScatteringConfig
 
@@ -16,7 +16,7 @@ def build_FS(config: DispersionConfig):
         Tzmultvalue=config.Tzmultvalue,
         mumultvalue=config.mumultvalue,
     )
-    fsOrbits_instance = orbitcreation.fermiSurfaceOrbits(
+    fsOrbits_instance = fermiSurface.fermiSurfaceOrbits(
         config.res_z, config.res_xy, dispersion_instance, True
     )
     fsOrbits_instance.createFS(
