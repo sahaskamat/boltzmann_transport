@@ -1,7 +1,5 @@
 import numpy as np
 import scipy as sp
-import transport.dispersion as dispersion
-from time import time
 
 def kronecker_delta(x,y,atol=1e-5):
     """Takes in two numbers and returns 1 if they are the same, 0 otherwise"""
@@ -19,7 +17,7 @@ class Conductivity:
     def __init__(self,scatteringMatrixInstance):
         self.SMInstance = scatteringMatrixInstance
 
-    def createAlpha(self,initial_guess=None):
+    def createAlpha(self):
         """Calculate"""
         A = self.SMInstance.A_Bdependent + self.SMInstance.A_Bindependent
         self.alpha = sp.linalg.solve(A,self.SMInstance.dedk_list)
@@ -32,12 +30,13 @@ class Conductivity:
         #this creates the matrix sigma_mu_nu
         #mu and nu range from 0 to 2, with 0 being x, 1 being y and 2 being z
         self.sigma = np.zeros([3,3])
-        #IMPORTANT:Sigma is in units of S/m (i.e. SI units of conductivity)
+        # IMPORTANT:Sigma is in units of Giga S/m (i.e. 1/Sigma is in units nOhm-m)
 
         for mu in range(3):
             for nu in range(3):
-                self.areasum = 0 #this keeps track of the total area over which we integrate
-                self.sigma[mu,nu] = (3.699e-10/(4*(np.pi**3)))*np.sum(moddedk_list[:,mu]*self.alpha[:,nu]*self.SMInstance.patcharealist)
+                #this keeps track of the total area over which we integrate
+                self.areasum = 0
+                self.sigma[mu,nu] = (3.699/(4*(np.pi**3)))*np.sum(moddedk_list[:,mu]*self.alpha[:,nu]*self.SMInstance.patcharealist)
 
         self.areasum = np.sum(self.SMInstance.patcharealist)
 

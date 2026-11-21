@@ -1,63 +1,39 @@
-"""Generate single-field ADMR curves from an easy-to-edit configuration."""
-
-import sys
-from pathlib import Path
+from transport.wrappers import create_dispersion,create_FS,create_SM,rhozz_vs_theta,load_data_nov2026
 import matplotlib.pyplot as plt
+import numpy as np
+import time
 
-REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
-if str(REPOSITORY_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPOSITORY_ROOT))
+start = time.perf_counter()
 
-from sandbox.config.dispersionconfig import DispersionConfig
-from sandbox.config.scatteringconfig import ScatteringConfig
-from sandbox.config.ADMRconfig import ADMRConfig
-from sandbox.config.experimentaldataconfig import ExperimentalDataConfig
+dispersionInstance = create_dispersion(T=190e-3,T1multvalue=-0.132,T11multvalue=0.066,Tzmultvalue=0.0376,mumultvalue=0.86 )
+FSinstance = create_FS(dispersionInstance,res_z=20,res_xy=100)
+FSinstance.calculateDoping()
 
-from sandbox.calculateADMR import rhoZZ_vs_theta
-from sandbox.createFSandScattering import build_scattering,build_FS
-from sandbox.loaddata import load_experimental_data
-from sandbox.plotting import normalize_data
+scattering_params_list = [
+    ["pipidelta_exp",True,{"strength":2.5,"spread_xy":0.145,"n":4}],
+    ["pipi",False,{"strength":0,"spread_xy":0.136,"n":5.167}]
+]
+SMinstance = create_SM(dispersionInstance,FSinstance,invtau_iso=9.5,scattering_params_list=scattering_params_list)
 
-DISPERSION_CONFIG = DispersionConfig(Tzmultvalue = 0.09)
-SCATTERING_CONFIG = ScatteringConfig(
-        invtau_iso=9,
-        scatteringmodel=["pipidelta_exp","pipi"],
-        delta_in_k=[True,False],
-        scattering_kwargs=[{"strength":14,"spread_xy":0.13,"n":5},{"strength":0,"spread_xy":0.4,"n":2}],
-        plot_scattering=False
-    )   
-ADMR_CONFIGS = (ADMRConfig(phi=5, field=41.5),ADMRConfig(phi=10, field=41.5),ADMRConfig(phi=30, field=41.5),ADMRConfig(phi=45, field=41.5))
+theta_array = np.sort(np.concatenate((np.linspace(-14,100,20),[0])))
+rho_array_0 = rhozz_vs_theta(B=41.5,phi=0,theta_array=theta_array,scatteringMatrixInstance=SMinstance)
+rho_array_45 = rhozz_vs_theta(B=41.5,phi=45,theta_array=theta_array,scatteringMatrixInstance=SMinstance)
 
-EXPERIMENTAL_DATA_CONFIGS = (
-    ExperimentalDataConfig(sample="2511A",temperature_kelvin=30,phi=0,field=45.0),
-    ExperimentalDataConfig(sample="2511A",temperature_kelvin=30,phi=45,field=45.0),
-)
+end = time.perf_counter()
+elapsed = end - start
+print(f"Execution time: {elapsed:.6f} seconds")
 
-def main() -> None:
-    dispersion, fermi_surface = build_FS(DISPERSION_CONFIG)
-    scattering = build_scattering(SCATTERING_CONFIG,dispersion,fermi_surface)
+fig,(axes,axes1) = plt.subplots(1,2,figsize=(8,4))
 
-    fig,(axes,axes2) = plt.subplots(1,2,figsize=(8,4))
-    for admr_config in ADMR_CONFIGS:
+axes.plot(theta_array,rho_array_0/10000,"-o",ms=3)
+axes.plot(theta_array,rho_array_45/10000,"-o",ms=3)
 
-        theta,rho = rhoZZ_vs_theta(admr_config,scattering)
-        axes.plot(theta,rho,label=f"$\phi$={admr_config.phi}")
-        axes2.plot(normalize_data(theta,rho)[0],normalize_data(theta,rho)[1])
+axes1.plot(theta_array,rho_array_0/rho_array_0[np.argmin(theta_array**2)],"-o",ms=3)
+axes1.plot(theta_array,rho_array_45/rho_array_45[np.argmin(theta_array**2)],"-o",ms=3)
 
-        #theta_exp,rho_exp = load_experimental_data(experimental_data)
-        #axes.plot(theta_exp,rho_exp)
-        #axes2.plot(normalize_data(theta_exp,rho_exp)[0],normalize_data(theta_exp,rho_exp)[1])
+for phi in [0,15,30,45]:
+    axes.plot(*load_data_nov2026(sample="LSCO-2609-27E",field=41.5,phi=phi,temp=35))
+    theta,rho = load_data_nov2026(sample="LSCO-2609-27E",field=41.5,phi=phi,temp=35)
+    axes1.plot(theta,rho/rho[np.argmin(theta**2)])
 
-    axes.set_xlabel(r"$\theta$ ($^\circ$)")
-    axes.set_ylabel(r"$\rho$ (m$\Omega$-cm)")
-    axes2.set_xlabel(r"$\theta$ ($^\circ$)")
-    axes2.set_ylabel(r"$\rho/\rho_0$")
-    axes.legend()
-
-    fig.tight_layout()
-    plt.show()
-    #plot_curves(theoretical_results=results, experimental_data=experimental_data)
-
-
-if __name__ == "__main__":
-    main()
+plt.show()

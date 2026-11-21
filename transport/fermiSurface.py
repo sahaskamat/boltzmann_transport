@@ -114,21 +114,3 @@ class fermiSurface:
         print(f"Doping = {calculated_doping}%")
         return calculated_doping 
 
-    def plotpoints(self):
-        ax = plt.figure().add_subplot(projection='3d')
-
-        #plotting extendedcurveslist
-        for curve in self.initialcurvesList:
-            ax.scatter(curve[:,0],curve[:,1], curve[:,2], label='parametric curve',s=5)
-
-        #making unit cell
-        hx, hy, hz = np.pi/self.dispersion.a, np.pi/self.dispersion.b, np.pi/self.c  
-
-        pts = list(product([-hx, hx], [-hy, hy], [-hz, hz]))
-
-        for s, e in combinations(pts, 2):
-            if sum(abs(a-b) for a,b in zip(s,e)) in (2*hx, 2*hy, 2*hz):
-                ax.plot3D(*zip(s,e), color="k")
-
-        plt.show()
-

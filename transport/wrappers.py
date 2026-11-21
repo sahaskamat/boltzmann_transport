@@ -4,6 +4,7 @@ from transport.scatteringMatrix import scatteringMatrix
 from transport.conductivity import Conductivity
 from joblib import delayed, Parallel
 import numpy as np
+from pathlib import Path
 
 def create_dispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue):
     dispersionInstance = LSCOdispersion(T,T1multvalue,T11multvalue,Tzmultvalue,mumultvalue)
@@ -16,7 +17,7 @@ def create_FS(dispersionInstance,res_z,res_xy):
 
 def create_SM(dispersionInstance,fermiSurfaceInstance,invtau_iso,scattering_params_list):
     """
-    scattering_params_list[i] should be a list of the form
+    scattering_params_list[i] should be a dict of the form
     [str:scattering kernel name,bool:delta in k,dict:kwargs dict for each scattering kernel]
     see examples/example_ADMR_with_wrapper.py for a usecase
     """
@@ -59,13 +60,18 @@ def rhozz_vs_theta(B,phi,theta_array,scatteringMatrixInstance):
         return rho[2,2]
 
     rholist = makelist_parallel(calculate_rhozz,theta_array)
-    return rholist
+    return np.array(rholist)
 
-def makelist_parallel(function,inputslist,workers=4):
+def makelist_parallel(function,inputslist,workers=8):
     """#operate function over inputslist paralelly to create functionlist"""
     functionlist = Parallel(n_jobs=int(workers))(delayed(function)(inputinstance) for inputinstance in inputslist)
 
     return functionlist
 
+def load_data_nov2026(sample,field,phi,temp):
+    file_path = Path.cwd() / "data" / "admr_data" / "Maglab Nov 2026" / f"{field:.1f}T" / sample / f"T{temp:.0f}K_phi{phi:.0f}_B{field:.1f}T.csv"
+    theta,rho = np.loadtxt(file_path, delimiter=',', skiprows=1,usecols=[0,1],unpack=True)
+    theta,rho = theta[np.argsort(theta)],rho[np.argsort(theta)]
+    return theta,rho
 
 

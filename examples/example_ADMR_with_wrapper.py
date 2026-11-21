@@ -16,6 +16,7 @@ theta_array = np.linspace(-14,100,80)
 rho_array_0 = rhozz_vs_theta(B=41.5,phi=0,theta_array=theta_array,scatteringMatrixInstance=SMinstance)
 rho_array_45 = rhozz_vs_theta(B=41.5,phi=45,theta_array=theta_array,scatteringMatrixInstance=SMinstance)
 
-plt.plot(theta_array,rho_array_0)
-plt.plot(theta_array,rho_array_45)
+plt.plot(theta_array,rho_array_0/10000)
+plt.plot(theta_array,rho_array_45/10000)
 plt.show()
+
