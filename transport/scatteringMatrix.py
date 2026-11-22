@@ -56,8 +56,15 @@ class scatteringMatrix:
         self.deltaparray_outofplane_norms = np.linalg.norm(deltaparray_outofplane,axis=1)
         self.deltaparray_outofplane_unitvectors = deltaparray_outofplane/self.deltaparray_outofplane_norms[:,None]
 
+        #create a basis and a metric associated with each point that will be used to create an orthogonal basis later IMPORTANT: THIS IS AI ASSISTED, CHECK CAREFULLY
+        self.deltaparray_inplane = deltaparray_inplane
+        self.deltaparray_outofplane = deltaparray_outofplane
+        self.mesh_basis = np.stack([self.deltaparray_inplane, self.deltaparray_outofplane],axis=-1) # Shape: (number_of_states, 3, 2)
+        self.mesh_metric = (self.mesh_basis.transpose(0, 2, 1) @ self.mesh_basis) # Shape: (number_of_states, 2, 2)
+        self.dual_basis = np.linalg.solve(self.mesh_metric,self.mesh_basis.transpose(0, 2, 1))
+
         #list of fermi surface areas associated with each point
-        self.patcharealist = (self.deltaparray_inplane_norms*self.deltaparray_outofplane_norms)/4
+        self.patcharealist = np.linalg.norm(np.cross(self.deltaparray_inplane,self.deltaparray_outofplane),axis=1) / 4
 
         #list of in-plane fermi surface lengths associated with each point
         self.inplanelengthlist = self.deltaparray_inplane_norms/2
@@ -162,10 +169,11 @@ class scatteringMatrix:
 
         self.B = B
         crosslist  = np.cross(self.dedk_list,self.B) #crosslist[i]  = dedk(state[i]) x B
-        dotlist_inplane = np.sum(crosslist*self.deltaparray_inplane_unitvectors,axis=1) #dotlist_inplane[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])
-        dotlist_outofplane = np.sum(crosslist*self.deltaparray_outofplane_unitvectors,axis=1) #dotlist_outofplane[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1]) for out of plane states
-        graddatalist_inplane = dotlist_inplane/(self.deltaparray_inplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1])
-        graddatalist_outofplane = dotlist_outofplane/(self.deltaparray_outofplane_norms*(6.582119569**2)) #graddatalist[i] = (dedk(state[i]) x B) . unitvec(state[i+1] - state[i-1])/norm(state[i+1] - state[i-1]) for out of plane states
+        # IMPORTANT: below five lines are AI generated, please check correctness
+        coefficients = np.einsum("nik,nk->ni", self.dual_basis, crosslist)
+        coefficients /= 6.582119569**2 # Preserve your existing physical prefactor pending unit verification.
+        graddatalist_inplane = coefficients[:, 0]
+        graddatalist_outofplane = coefficients[:, 1]
 
         i=0 #i corresponds to the ith orbit that is being iterated
         n = len(self.fermiSurfaceInstance.FSorbits) #n is the number of orbits
